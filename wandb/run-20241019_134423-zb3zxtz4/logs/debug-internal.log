@@ -1,0 +1,21 @@
+{"time":"2024-10-19T13:44:27.3475+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T13:44:27.347552+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_134423-zb3zxtz4/logs/debug-core.log"}
+{"time":"2024-10-19T13:44:27.455469+02:00","level":"INFO","msg":"created new stream","id":"zb3zxtz4"}
+{"time":"2024-10-19T13:44:27.455502+02:00","level":"INFO","msg":"stream: started","id":"zb3zxtz4"}
+{"time":"2024-10-19T13:44:27.455508+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"zb3zxtz4"}}
+{"time":"2024-10-19T13:44:27.455526+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"zb3zxtz4"}}
+{"time":"2024-10-19T13:44:27.455521+02:00","level":"INFO","msg":"sender: started","stream_id":"zb3zxtz4"}
+{"time":"2024-10-19T13:44:27.72377+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-19T13:44:32.19836+02:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2024-10-19T13:44:41.660737+02:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2024-10-19T13:44:41.6655+02:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2024-10-19T13:44:46.62465+02:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2024-10-19T13:44:46.660546+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-19T13:44:46.660891+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-19T13:44:47.372462+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-19T13:44:47.561825+02:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-10-19T13:44:48.565632+02:00","level":"INFO","msg":"stream: closing","id":"zb3zxtz4"}
+{"time":"2024-10-19T13:44:48.565651+02:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"zb3zxtz4"}}
+{"time":"2024-10-19T13:44:48.565667+02:00","level":"INFO","msg":"sender: closed","stream_id":"zb3zxtz4"}
+{"time":"2024-10-19T13:44:48.565665+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"zb3zxtz4"}}
+{"time":"2024-10-19T13:44:48.565827+02:00","level":"INFO","msg":"stream: closed","id":"zb3zxtz4"}

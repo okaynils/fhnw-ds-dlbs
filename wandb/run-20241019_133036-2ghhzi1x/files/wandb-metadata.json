@@ -1,0 +1,38 @@
+{
+  "os": "macOS-15.0.1-arm64-arm-64bit",
+  "python": "3.12.4",
+  "startedAt": "2024-10-19T11:30:36.568008Z",
+  "program": "/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/main.ipynb",
+  "git": {
+    "remote": "https://github.com/okaynils/fhnw-ds-dlbs.git",
+    "commit": "e2e13e49ac8aa168ee6fe37cf4c56a1aeecc54f8"
+  },
+  "email": "nils.fahrni@students.fhnw.ch",
+  "root": "/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs",
+  "host": "MacBook-Pro.local",
+  "username": "nils",
+  "executable": "/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/.venv/bin/python",
+  "codePathLocal": "main.ipynb",
+  "cpu_count": 8,
+  "cpu_count_logical": 8,
+  "disk": {
+    "/": {
+      "total": "494384795648",
+      "used": "359457058816"
+    }
+  },
+  "memory": {
+    "total": "17179869184"
+  },
+  "cpu": {
+    "count": 8,
+    "countLogical": 8
+  },
+  "apple": {
+    "name": "Apple M1",
+    "ecpuCores": 4,
+    "pcpuCores": 4,
+    "gpuCores": 8,
+    "memoryGb": 16
+  }
+}

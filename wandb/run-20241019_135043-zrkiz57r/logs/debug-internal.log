@@ -1,0 +1,21 @@
+{"time":"2024-10-19T13:50:43.801128+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T13:50:43.801195+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_135043-zrkiz57r/logs/debug-core.log"}
+{"time":"2024-10-19T13:50:43.912333+02:00","level":"INFO","msg":"created new stream","id":"zrkiz57r"}
+{"time":"2024-10-19T13:50:43.912476+02:00","level":"INFO","msg":"stream: started","id":"zrkiz57r"}
+{"time":"2024-10-19T13:50:43.91252+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"zrkiz57r"}}
+{"time":"2024-10-19T13:50:43.912514+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"zrkiz57r"}}
+{"time":"2024-10-19T13:50:43.912598+02:00","level":"INFO","msg":"sender: started","stream_id":"zrkiz57r"}
+{"time":"2024-10-19T13:50:44.169898+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-19T13:54:26.000364+02:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2024-10-19T13:54:50.025142+02:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2024-10-19T13:54:50.030189+02:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2024-10-19T13:54:52.645574+02:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2024-10-19T13:54:52.756894+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-19T13:54:52.757333+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-19T13:54:53.762898+02:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading config.yaml","runtime_seconds":0.408512959,"progress":"542B/542B"},{"desc":"uploading output.log","runtime_seconds":0.408486916,"progress":"916B/916B"}],"total_operations":2}}
+{"time":"2024-10-19T13:54:54.070977+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-19T13:54:55.262291+02:00","level":"INFO","msg":"stream: closing","id":"zrkiz57r"}
+{"time":"2024-10-19T13:54:55.26233+02:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"zrkiz57r"}}
+{"time":"2024-10-19T13:54:55.262366+02:00","level":"INFO","msg":"sender: closed","stream_id":"zrkiz57r"}
+{"time":"2024-10-19T13:54:55.262351+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"zrkiz57r"}}
+{"time":"2024-10-19T13:54:55.262686+02:00","level":"INFO","msg":"stream: closed","id":"zrkiz57r"}

@@ -1,0 +1,8 @@
+{"time":"2024-10-19T15:15:32.82096+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T15:15:32.821048+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_151529-mcub6o0g/logs/debug-core.log"}
+{"time":"2024-10-19T15:15:32.932028+02:00","level":"INFO","msg":"created new stream","id":"mcub6o0g"}
+{"time":"2024-10-19T15:15:32.932072+02:00","level":"INFO","msg":"stream: started","id":"mcub6o0g"}
+{"time":"2024-10-19T15:15:32.932087+02:00","level":"INFO","msg":"sender: started","stream_id":"mcub6o0g"}
+{"time":"2024-10-19T15:15:32.932076+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"mcub6o0g"}}
+{"time":"2024-10-19T15:15:32.932096+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"mcub6o0g"}}
+{"time":"2024-10-19T15:15:33.157934+02:00","level":"INFO","msg":"Starting system monitor"}

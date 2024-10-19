@@ -1,0 +1,12 @@
+
+Epoch 1/10
+Training:   0%|          | 0/175 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/nils/.pyenv/versions/3.12.4/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nils/.pyenv/versions/3.12.4/lib/python3.12/multiprocessing/spawn.py", line 132, in _main
+    self = reduction.pickle.load(from_parent)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: Can't get attribute 'BDD100KDataset' on <module '__main__' (<class '_frozen_importlib.BuiltinImporter'>)>
+

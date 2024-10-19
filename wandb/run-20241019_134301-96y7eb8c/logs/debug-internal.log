@@ -1,0 +1,17 @@
+{"time":"2024-10-19T13:43:03.924165+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T13:43:03.924222+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_134301-96y7eb8c/logs/debug-core.log"}
+{"time":"2024-10-19T13:43:04.035383+02:00","level":"INFO","msg":"created new stream","id":"96y7eb8c"}
+{"time":"2024-10-19T13:43:04.035419+02:00","level":"INFO","msg":"stream: started","id":"96y7eb8c"}
+{"time":"2024-10-19T13:43:04.035438+02:00","level":"INFO","msg":"sender: started","stream_id":"96y7eb8c"}
+{"time":"2024-10-19T13:43:04.035462+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"96y7eb8c"}}
+{"time":"2024-10-19T13:43:04.03543+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"96y7eb8c"}}
+{"time":"2024-10-19T13:43:04.320905+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-19T13:44:23.332632+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-19T13:44:23.333041+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-19T13:44:24.333523+02:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"saving job artifact","runtime_seconds":0.682934708}],"total_operations":1}}
+{"time":"2024-10-19T13:44:26.154582+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-19T13:44:27.346037+02:00","level":"INFO","msg":"stream: closing","id":"96y7eb8c"}
+{"time":"2024-10-19T13:44:27.346061+02:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"96y7eb8c"}}
+{"time":"2024-10-19T13:44:27.346083+02:00","level":"INFO","msg":"sender: closed","stream_id":"96y7eb8c"}
+{"time":"2024-10-19T13:44:27.346081+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"96y7eb8c"}}
+{"time":"2024-10-19T13:44:27.346221+02:00","level":"INFO","msg":"stream: closed","id":"96y7eb8c"}

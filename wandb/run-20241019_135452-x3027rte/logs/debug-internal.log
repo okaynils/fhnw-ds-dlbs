@@ -1,0 +1,17 @@
+{"time":"2024-10-19T13:54:55.265425+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T13:54:55.265519+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_135452-x3027rte/logs/debug-core.log"}
+{"time":"2024-10-19T13:54:55.379748+02:00","level":"INFO","msg":"created new stream","id":"x3027rte"}
+{"time":"2024-10-19T13:54:55.379789+02:00","level":"INFO","msg":"stream: started","id":"x3027rte"}
+{"time":"2024-10-19T13:54:55.379806+02:00","level":"INFO","msg":"sender: started","stream_id":"x3027rte"}
+{"time":"2024-10-19T13:54:55.379795+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"x3027rte"}}
+{"time":"2024-10-19T13:54:55.379844+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"x3027rte"}}
+{"time":"2024-10-19T13:54:55.622461+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-19T13:55:10.170815+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-19T13:55:10.171242+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-19T13:55:10.917904+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-19T13:55:11.135629+02:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-10-19T13:55:12.139914+02:00","level":"INFO","msg":"stream: closing","id":"x3027rte"}
+{"time":"2024-10-19T13:55:12.139965+02:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"x3027rte"}}
+{"time":"2024-10-19T13:55:12.140002+02:00","level":"INFO","msg":"sender: closed","stream_id":"x3027rte"}
+{"time":"2024-10-19T13:55:12.14+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"x3027rte"}}
+{"time":"2024-10-19T13:55:12.140284+02:00","level":"INFO","msg":"stream: closed","id":"x3027rte"}
