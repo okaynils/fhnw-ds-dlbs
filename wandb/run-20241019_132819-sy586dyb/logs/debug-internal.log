@@ -1,9 +1,0 @@
-{"time":"2024-10-19T13:28:21.62981+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
-{"time":"2024-10-19T13:28:21.62986+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_132819-sy586dyb/logs/debug-core.log"}
-{"time":"2024-10-19T13:28:21.738369+02:00","level":"INFO","msg":"created new stream","id":"sy586dyb"}
-{"time":"2024-10-19T13:28:21.738412+02:00","level":"INFO","msg":"stream: started","id":"sy586dyb"}
-{"time":"2024-10-19T13:28:21.738414+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"sy586dyb"}}
-{"time":"2024-10-19T13:28:21.738419+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"sy586dyb"}}
-{"time":"2024-10-19T13:28:21.738497+02:00","level":"INFO","msg":"sender: started","stream_id":"sy586dyb"}
-{"time":"2024-10-19T13:28:22.026831+02:00","level":"INFO","msg":"Starting system monitor"}
-{"time":"2024-10-19T13:29:12.028348+02:00","level":"ERROR","msg":"monitor: cpu: error sampling metrics: input/output error"}

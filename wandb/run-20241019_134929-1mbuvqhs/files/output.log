@@ -1,6 +1,0 @@
-
-Epoch 1/10
-                                                 
-Number of training samples: 7000
-Number of validation samples: 1000
-Batch size: torch.Size([32, 3, 720, 1280]), Labels: torch.Size([32, 720, 1280])

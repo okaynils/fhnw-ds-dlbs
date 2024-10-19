@@ -1,8 +1,0 @@
-{"time":"2024-10-19T13:35:21.981118+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
-{"time":"2024-10-19T13:35:21.981231+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_133518-yz2ezcrg/logs/debug-core.log"}
-{"time":"2024-10-19T13:35:22.093945+02:00","level":"INFO","msg":"created new stream","id":"yz2ezcrg"}
-{"time":"2024-10-19T13:35:22.093988+02:00","level":"INFO","msg":"stream: started","id":"yz2ezcrg"}
-{"time":"2024-10-19T13:35:22.094022+02:00","level":"INFO","msg":"sender: started","stream_id":"yz2ezcrg"}
-{"time":"2024-10-19T13:35:22.094053+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"yz2ezcrg"}}
-{"time":"2024-10-19T13:35:22.093998+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"yz2ezcrg"}}
-{"time":"2024-10-19T13:35:22.364286+02:00","level":"INFO","msg":"Starting system monitor"}

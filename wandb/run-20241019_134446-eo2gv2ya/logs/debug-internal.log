@@ -1,8 +1,0 @@
-{"time":"2024-10-19T13:44:48.566798+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
-{"time":"2024-10-19T13:44:48.566848+02:00","level":"INFO","msg":"created symlink","path":"/Users/nils/Documents/Classes/dlbs/fhnw-ds-dlbs/wandb/run-20241019_134446-eo2gv2ya/logs/debug-core.log"}
-{"time":"2024-10-19T13:44:48.673378+02:00","level":"INFO","msg":"created new stream","id":"eo2gv2ya"}
-{"time":"2024-10-19T13:44:48.673419+02:00","level":"INFO","msg":"stream: started","id":"eo2gv2ya"}
-{"time":"2024-10-19T13:44:48.673426+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"eo2gv2ya"}}
-{"time":"2024-10-19T13:44:48.673436+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"eo2gv2ya"}}
-{"time":"2024-10-19T13:44:48.673476+02:00","level":"INFO","msg":"sender: started","stream_id":"eo2gv2ya"}
-{"time":"2024-10-19T13:44:49.316302+02:00","level":"INFO","msg":"Starting system monitor"}
