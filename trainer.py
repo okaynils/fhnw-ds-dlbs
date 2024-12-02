@@ -5,11 +5,10 @@ import torch.nn as nn
 from torchmetrics import JaccardIndex
 
 class Trainer:
-    def __init__(self, model, criterion, optimizer, lr, epochs, weight_init, seed, device, verbose, run_name):
+    def __init__(self, model, criterion, optimizer, epochs, weight_init, seed, device, verbose, run_name):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
-        self.lr = lr
         self.epochs = epochs
         self.weight_init = weight_init
         self.seed = seed
