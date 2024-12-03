@@ -1,13 +1,39 @@
 \chapter{Task}
 
-\section{Scientific Question}
+\section{Research Question}
 
-How does the performance of a U-Net semantic segmentation model differ between scenes of city streets and non-city streets in the BDD100K dataset?
+The research question which I aim to answer with this mini-challenge is: 
+
+\say{How does the performance of a U-Net semantic segmentation model differ between scenes of city streets and non-city streets in the BDD100K dataset?}
+
+This research question is interesting because it addresses the practical challenges of deploying semantic segmentation models in real-world applications, such as autonomous driving, where environmental variability is a key concern. City and non-city environments differ significantly in terms of visual characteristics, object density, and lighting conditions, which can impact the performance of computer vision models.
 
 \section{Dataset}
 
-I decided for the BDD100K dataset. The BDD100K dataset is the largest driving video dataset, featuring 100,000 videos and supporting 10 tasks for evaluating and advancing multitask learning in autonomous driving. It offers diverse geographic, environmental, and weather conditions, making it a benchmark for studying heterogeneous multitask learning and training robust computer vision models \cite{yuBDD100KDiverseDriving2020}. For this Mini Challenge I use the "10k" subset, which is made up of 10,000 images and are sampled from the 100,000 videos' frames. This subset is intended for semantic segmentation tasks. These 10,000 images have already been pre-partitioned into a train, validation and test partition. The train partition consists of 8000 images, the validation 1000 and the test 1000. This smaller subset does unfortunately not have scene attributes but the larger video dataset does. Since the semantic segmenatiton subset is derived from the video dataset, I retrieve the scene attributes through the larger datasets metadata JSON. The issue here is that not all images in the semantic segmentation subset seem to be in the video dataset. I will therefore only use the small overlap of images that has scene attributes and exists both in the video and semantic segmentation dataset.
+I decided for the BDD100K dataset. The BDD100K dataset is the largest driving video dataset, featuring 100,000 videos and supporting 10 tasks for evaluating and advancing multitask learning in autonomous driving. It offers diverse geographic, environmental, and weather conditions, making it a benchmark for studying heterogeneous multitask learning and training robust computer vision models \cite{yuBDD100KDiverseDriving2020}. 
+
+For this Mini Challenge I use the "10k" subset, which is made up of 10,000 RGB images and are sampled from the 100,000 videos' frames. This subset is intended for semantic segmentation tasks. These 10,000 images have already been pre-partitioned into a train, validation and test partition. The train partition consists of 8000 images, the validation 1000 and the test 1000.
+
+This smaller subset does unfortunately not have scene attributes but the larger video dataset does. Since the semantic segmenatiton subset is derived from the video dataset, I retrieve the scene attributes through the larger datasets metadata JSON. The issue here is that not all images in the semantic segmentation subset seem to be in the video dataset. I will therefore only use the small overlap of images that has scene attributes and exists both in the video and semantic segmentation dataset. This overlap consists of 3426 images.
 
 \section{Methodology and Procedure}
+To answer the research question, I will train a \textbf{U-Net} model on the BDD100K dataset. The U-Net architecture is a common choice for segmentation tasks as it contains an Encoder-Decoder structure:
+\begin{enumerate}
+    \item \textbf{Encoder}: Extracts features from the input image using a series of convolutional and downsampling operations, capturing contextual information. The downsampling path in the encoder captures features at multiple scales, enabling the model to understand both local and global context. This is essential in self-driving tasks to distinguish between small objects (like traffic cones) and large areas (like the road).
+    \item \textbf{Decoder}: Gradually upsamples the feature maps and uses convolutions to predict dense segmentation maps. This structure is ideal for segmenting objects in self-driving scenarios, such as lanes, vehicles, pedestrians, and road signs.
+\end{enumerate}
 
-To answer the scientific question, I will train a U-Net model on the BDD100K dataset. I will then evaluate the model on the test set and compare the performance between city street and non-city street scenes. I will use the mean Intersection over Union (mIoU) as the evaluation metric. The mIoU is a common metric for semantic segmentation tasks. It is calculated as the mean of the Intersection over Union (IoU) for each class.
+As a second model I will modify the U-Net model to include an attention mechanism, which I will implement myself according to \cite{oktayAttentionUNetLearning2018}. I expect the addition of attention to be another improving factor because:
+\begin{enumerate}
+    \item \textbf{Driving Reality}: Different objects and their spatial relationships often define the context. For instance:
+    \begin{enumerate}
+        \item  A cyclist is more likely to be found near a bike lane or the edge of a road.
+        \item A pedestrian might be near a crosswalk but not in the middle of a highway.
+        Cars and trucks are expected on roads but not sidewalks.
+    \end{enumerate} 
+    \item \textbf{Attention Benefit}: The attention mechanism allows the model to focus not just on isolated objects but also on the relationships between them. It helps the network infer that the presence of a bike lane increases the likelihood of a cyclist or that highway lanes imply the absence of pedestrians and cyclists.
+\end{enumerate}
+
+I will then evaluate the models on the test set and compare the performance between city street and non-city street scenes. To measure and evaluate the performance between different model complexities numerically, I will use the mean Intersection over Union (mIoU) as the evaluation metric.
+
+Both models will be explored within the schema of "A Recipe for Training Neural Networks" according to Andrej Karpathy \cite{karpathyRecipeTrainingNeural2019}.
