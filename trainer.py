@@ -5,7 +5,7 @@ import torch.nn as nn
 from torchmetrics import JaccardIndex
 
 class Trainer:
-    def __init__(self, model, criterion, optimizer, epochs, weight_init, seed, device, verbose, run_name):
+    def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -21,9 +21,13 @@ class Trainer:
         self.iou_metric = JaccardIndex(num_classes=19, task="multiclass").to(self.device)
 
         self._set_seed(self.seed)
-        wandb.init(project="dlbs", name=self.run_name)
         
-        self.run_id = wandb.run.id
+        if not self._precheck():
+            wandb.init(project="dlbs", name=self.run_name)        
+            self.run_id = wandb.run.id
+        else:
+            print(f'Model trainer was already initialized. Skipping wandb initialization.')
+
         self.best_val_loss = float('inf')
 
         os.makedirs("models", exist_ok=True)
@@ -50,7 +54,7 @@ class Trainer:
         """
         if val_loss < self.best_val_loss:
             self.best_val_loss = val_loss
-            model_name = f"{self.model.__class__.__name__}_{self.run_id}.pth"
+            model_name = f"{self.run_name}_{self.run_id}.pth"
             save_path = os.path.join("models", model_name)
             
             torch.save(self.model.state_dict(), save_path)
@@ -118,28 +122,38 @@ class Trainer:
 
         return epoch_loss, epoch_iou
 
+    def _precheck(self): 
+        models = os.listdir("models")
+        for model in models:
+            if self.run_name in model:
+                return True
+        return False
+
     def run(self, train_loader, val_loader):
-        self._initialize_weights()
+        if not self._precheck():
+            self._initialize_weights()
 
-        for epoch in range(self.epochs):
-            train_loss, train_iou = self._train_epoch(train_loader)
-            val_loss, val_iou = self._validate_epoch(val_loader)
+            for epoch in range(self.epochs):
+                train_loss, train_iou = self._train_epoch(train_loader)
+                val_loss, val_iou = self._validate_epoch(val_loader)
 
-            if self.verbose:
-                print(f"Epoch {epoch+1}/{self.epochs} - "
-                      f"Train Loss: {train_loss:.4f}, Train IoU: {train_iou:.4f} - "
-                      f"Val Loss: {val_loss:.4f}, Val IoU: {val_iou:.4f}")
+                if self.verbose:
+                    print(f"Epoch {epoch+1}/{self.epochs} - "
+                        f"Train Loss: {train_loss:.4f}, Train IoU: {train_iou:.4f} - "
+                        f"Val Loss: {val_loss:.4f}, Val IoU: {val_iou:.4f}")
 
-            wandb.log({
-                "epoch": epoch+1,
-                "train_loss": train_loss,
-                "train_iou": train_iou,
-                "val_loss": val_loss,
-                "val_iou": val_iou
-            })
+                wandb.log({
+                    "epoch": epoch+1,
+                    "train_loss": train_loss,
+                    "train_iou": train_iou,
+                    "val_loss": val_loss,
+                    "val_iou": val_iou
+                })
 
-            # Save the model if it's the best one so far
-            self._save_model(val_loss)
+                # Save the model if it's the best one so far
+                self._save_model(val_loss)
+        else:
+            print(f'Model {self.run_name} already exists! Skipping training.')
 
     def test(self, test_loader):
         test_loss, test_iou = self._validate_epoch(test_loader)
