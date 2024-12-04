@@ -1,9 +1,9 @@
 /data/*/
 .venv
-##/wandb
+/wandb
 __pycache__
 .log
-##/models/*
+/models/*
 
 .venv
 data/*
