@@ -1,0 +1,17 @@
+defaults:
+  - model: unet
+  - dataset: bdd100k
+  - optimizer: adam
+
+run_name: "example_run"
+epochs: 50
+seed: 42
+device: "mps"
+verbose: true
+
+dataset:
+  batch_size: 16
+
+criterion:
+  _target_: torch.nn.CrossEntropyLoss
+  ignore_index: 255  

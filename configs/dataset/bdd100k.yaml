@@ -1,0 +1,20 @@
+_target_: data.BDD100KDataset
+images_dir: "data/bdd100k/images/10k/train"
+labels_dir: "data/bdd100k/labels/sem_seg/masks/train"
+det_train_path: "data/bdd100k/labels/det_20/det_train.json"
+det_val_path: "data/bdd100k/labels/det_20/det_val.json"
+test_size: 454
+transform:
+  _target_: torchvision.transforms.Compose
+  transforms:
+    - _target_: torchvision.transforms.Resize
+      size: [72, 128]
+    - _target_: torchvision.transforms.ToTensor
+target_transform:
+  _target_: torchvision.transforms.Compose
+  transforms:
+    - _target_: torchvision.transforms.Resize
+      size: [72, 128]
+      interpolation: 0
+    - _target_: data.utils.ConvertToLongTensor
+batch_size: 16

@@ -71,7 +71,7 @@ class Trainer:
 
         for images, labels, _ in train_loader:
             images, labels = images.to(self.device), labels.to(self.device, dtype=torch.long)
-
+            
             self.optimizer.zero_grad()
             outputs = self.model(images)
             loss = self.criterion(outputs, labels)
