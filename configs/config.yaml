@@ -5,8 +5,8 @@ defaults:
 
 run_name: "example_run"
 epochs: 50
-seed: 42
-device: "mps"
+seed: 1337
+device: "cuda"
 verbose: true
 
 dataset:
@@ -14,4 +14,4 @@ dataset:
 
 criterion:
   _target_: torch.nn.CrossEntropyLoss
-  ignore_index: 255  
+  ignore_index: 255

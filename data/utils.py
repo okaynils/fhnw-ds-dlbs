@@ -26,15 +26,8 @@ def custom_split_dataset_with_det(
     train_images_dir = os.path.join(base_data_path)
     train_labels_dir = os.path.join(base_labels_path)
 
-    # print number of images in each set
-    print(f"Number of {train_images_dir} images: {len(os.listdir(train_images_dir))}")
-    print(f"Number of {train_labels_dir} labels: {len(os.listdir(train_labels_dir))}")
-    
     train_image_filenames = [f for f in os.listdir(train_images_dir) if f in train_scene_map]
     val_image_filenames = [f for f in os.listdir(train_images_dir) if f in val_scene_map]
-
-    print(f"Number of train images: {len(train_image_filenames)}")
-    print(f"train_image_filenames: {train_image_filenames}")
 
     train_image_filenames, test_image_filenames = train_test_split(
         train_image_filenames, test_size=test_size, random_state=random_state

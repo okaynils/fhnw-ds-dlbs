@@ -1,4 +1,4 @@
-_target_: core.unet.UNet
-encoder_dims: [64, 128]
-decoder_dims: [128, 64]
+_target_: core.UNet
 num_classes: 19
+encoder_dims: null
+decoder_dims: null

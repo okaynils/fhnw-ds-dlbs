@@ -56,6 +56,9 @@ def main(cfg: DictConfig):
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
     criterion = hydra.utils.instantiate(cfg.criterion)
 
+    print(f'--- Model Configuration of {cfg.model._target_} ---')
+    print(model)
+
     trainer = Trainer(
         model=model,
         criterion=criterion,
@@ -73,3 +76,4 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     main()
+    

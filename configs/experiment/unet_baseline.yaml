@@ -1,0 +1,12 @@
+_base_: ../config.yaml
+
+experiment_name: "unet_baseline"
+
+model:
+  _target_: core.UNet
+  num_classes: 19
+  encoder_dims: [64, 128, 256]
+  decoder_dims: [1024, 512, 256]
+
+trainer:
+  run_name: "unet_baseline"
