@@ -1,0 +1,5 @@
+run_name: "default_example_run"
+epochs: 50
+seed: 1337
+device: "cuda"
+verbose: true

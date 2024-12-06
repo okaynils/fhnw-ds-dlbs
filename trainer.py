@@ -122,7 +122,9 @@ class Trainer:
 
         return epoch_loss, epoch_iou
 
-    def _precheck(self): 
+    def _precheck(self):
+        if not os.path.exists("models"):
+            os.makedirs("models")
         models = os.listdir("models")
         for model in models:
             if self.run_name in model:

@@ -1,16 +1,17 @@
 defaults:
-  - model: unet
+  - _self_
+  - trainer: default
   - dataset: bdd100k
+  - model: unet
   - optimizer: adam
+  - experiment: unet_baseline
 
 run_name: "example_run"
 epochs: 50
 seed: 1337
 device: "cuda"
-verbose: true
 
-dataset:
-  batch_size: 16
+verbose: true
 
 criterion:
   _target_: torch.nn.CrossEntropyLoss

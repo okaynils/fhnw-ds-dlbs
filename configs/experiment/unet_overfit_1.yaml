@@ -1,12 +1,13 @@
-_base_: ../config.yaml
+# @package _global_
 
+run_name: "unet_overfit_1"
 experiment_name: "unet_overfit_1"
 
 model:
-  _target_: core.UNet
+  _target_: core.unet.UNet
   num_classes: 19
-  encoder_dims: [64, 128, 256, 512]
   decoder_dims: [512, 256, 128, 64]
+  encoder_dims: [64, 128, 256, 512]
 
 trainer:
   run_name: "unet_overfit_1"

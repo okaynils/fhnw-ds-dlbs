@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class UNet(nn.Module):
-    def __init__(self, encoder_dims, decoder_dims, num_classes):
+    def __init__(self, num_classes, encoder_dims, decoder_dims):
         """
         Initialize the dynamic U-Net.
         
@@ -13,7 +13,9 @@ class UNet(nn.Module):
         - num_classes: Number of output classes for semantic segmentation.
         """
         super(UNet, self).__init__()
-        
+        print(f"encoder_dims: {encoder_dims}")  # Debug
+        print(f"decoder_dims: {decoder_dims}")  # Debug
+
         assert len(encoder_dims) == len(decoder_dims), "Encoder and decoder dimensions must match in length."
 
         self.num_layers = len(encoder_dims)
