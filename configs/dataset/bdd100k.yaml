@@ -18,3 +18,4 @@ target_transform:
       interpolation: 0
     - _target_: data.utils.ConvertToLongTensor
 batch_size: 16
+class_weights_file: "data/class_weights.pt"

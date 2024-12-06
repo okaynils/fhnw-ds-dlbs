@@ -1,9 +1,11 @@
 import os
 import json
+from collections import Counter
 
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
+from tqdm import trange
 
 def custom_split_dataset_with_det(
     base_data_path,
@@ -93,3 +95,27 @@ def check_dataset_overlap(train_filenames, val_filenames, test_filenames):
 class ConvertToLongTensor:
     def __call__(self, x):
         return torch.tensor(np.array(x), dtype=torch.long)
+
+def map_class_names_and_order(class_distribution, class_dict):
+    ordered_classes = sorted(class_dict.keys())  # Ensure consistent class order
+    class_names = [class_dict[class_id] for class_id in ordered_classes if class_id in class_distribution]
+    proportions = [class_distribution[class_id] for class_id in ordered_classes if class_id in class_distribution]
+    return class_names, proportions
+
+def analyze_class_distribution(dataset, num_classes, dataset_name):
+    class_counts = Counter()
+    
+    for idx in trange(len(dataset), desc=f"Analyzing {dataset_name}"):
+        try:
+            _, mask, _ = dataset[idx]  # Access dataset item
+            mask_array = np.array(mask)  # Convert mask to numpy array
+            unique, counts = np.unique(mask_array, return_counts=True)
+            class_counts.update(dict(zip(unique, counts)))
+        except Exception as e:
+            print(f"Error processing index {idx}: {e}")
+            continue
+
+    total_pixels = sum(class_counts.values())
+    class_distribution = {cls: count / total_pixels for cls, count in class_counts.items()}
+
+    return class_counts, class_distribution
