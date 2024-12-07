@@ -8,13 +8,13 @@ transform:
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.Resize
-      size: [72, 128]
+      size: [128, 128]
     - _target_: torchvision.transforms.ToTensor
 target_transform:
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.Resize
-      size: [72, 128]
+      size: [128, 128]
       interpolation: 0
     - _target_: data.utils.ConvertToLongTensor
 batch_size: 16

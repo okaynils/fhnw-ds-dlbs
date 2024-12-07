@@ -74,18 +74,17 @@ class Trainer:
             
             self.optimizer.zero_grad()
             outputs = self.model(images)
+            
             loss = self.criterion(outputs, labels)
             loss.backward()
             self.optimizer.step()
 
             running_loss += loss.item()
 
-            # Calculate IoU, ignoring 255-labeled pixels
             _, predicted = outputs.max(1)
-            mask = labels != 255  # Create a mask for valid pixels
+            mask = labels != 255
             self.iou_metric.update(predicted[mask], labels[mask])
 
-            # Clear cache to manage GPU memory
             del images, labels, outputs
             torch.cuda.empty_cache()
 
@@ -152,7 +151,6 @@ class Trainer:
                     "val_iou": val_iou
                 })
 
-                # Save the model if it's the best one so far
                 self._save_model(val_loss)
         else:
             print(f'Model {self.run_name} already exists! Skipping training.')

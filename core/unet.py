@@ -13,8 +13,6 @@ class UNet(nn.Module):
         - num_classes: Number of output classes for semantic segmentation.
         """
         super(UNet, self).__init__()
-        print(f"encoder_dims: {encoder_dims}")  # Debug
-        print(f"decoder_dims: {decoder_dims}")  # Debug
 
         assert len(encoder_dims) == len(decoder_dims), "Encoder and decoder dimensions must match in length."
 

@@ -6,6 +6,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
 from data.bdd100k_dataset import BDD100KDataset
 from data.utils import *
+from sklearn.utils.class_weight import compute_class_weight
 import torch
 import torch.nn as nn
 
@@ -63,11 +64,17 @@ def main(cfg: DictConfig):
         class_weights = torch.load(class_weights_file, map_location=cfg.device)
     else:
         print("Calculating class weights...")
-        _, train_class_distribution = analyze_class_distribution(train_dataset, num_classes, "train")
-        ordered_class_dists = dict(sorted(train_class_distribution.items()))
+        all_masks = [sample[1] for sample in train_dataset]
+
+        flat_labels = np.concatenate([np.array(mask).flatten() for mask in all_masks])
+
+        classes = list(range(0, 19))
+        classes.append(255)
+
         class_weights = torch.tensor(
-            list(ordered_class_dists.values()), dtype=torch.float32, device=cfg.device
-        )[:-1]
+            compute_class_weight("balanced", classes=np.array(classes), y=flat_labels)[:-1], dtype=torch.float32, device=cfg.device
+        )
+        
         torch.save(class_weights, class_weights_file)
         print(f"Class weights saved to {class_weights_file}")
 

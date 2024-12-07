@@ -1,16 +1,16 @@
 # @package _global_
 
-run_name: "unet_overfit_2"
-experiment_name: "unet_overfit_2"
+run_name: "unet_overfit_3"
+experiment_name: "unet_overfit_3"
 
 model:
   _target_: core.VanillaUNet
   num_classes: 19
   input_channels: 3 
-  base_filters: 128
+  base_filters: 256
 
 trainer:
-  run_name: "unet_overfit_2"
+  run_name: "unet_overfit_3"
 
 optimizer:
   _target_: torch.optim.Adam
