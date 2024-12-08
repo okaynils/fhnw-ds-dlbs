@@ -23,7 +23,7 @@ class Trainer:
         self._set_seed(self.seed)
         
         if not self._precheck():
-            wandb.init(project="dlbs", name=self.run_name)        
+            wandb.init(project="dlbs", name=self.run_name)
             self.run_id = wandb.run.id
         else:
             print(f'Model trainer was already initialized. Skipping wandb initialization.')

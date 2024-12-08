@@ -1,0 +1,22 @@
+# @package _global_
+
+run_name: "unet_regularize_wd_0.001"
+experiment_name: "unet_regularize_wd_0.001"
+
+model:
+  _target_: core.VanillaUNet
+  num_classes: 19
+  input_channels: 3 
+  base_filters: 128
+
+trainer:
+  run_name: "unet_regularize_wd_0.001"
+  epochs: 100
+  seed: 1337
+  device: "cuda"
+  verbose: true
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.0001
+  weight_decay: 0.001

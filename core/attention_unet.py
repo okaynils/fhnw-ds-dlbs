@@ -84,19 +84,13 @@ class AttentionBlock(nn.Module):
 
 
 class DecoderBlock(nn.Module):
-    """
-    Decoder block: UpSample -> AttentionGate(skip, gating) -> Concatenate -> DoubleConv
-    """
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, skip_channels, gate_channels):
         super(DecoderBlock, self).__init__()
         self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
-        self.attention = AttentionBlock(F_g=out_channels, F_l=out_channels, F_int=out_channels // 2)
+        self.attention = AttentionBlock(F_g=gate_channels, F_l=skip_channels, F_int=skip_channels // 2)
         self.conv = DoubleConv(out_channels * 2, out_channels)
 
     def forward(self, x, skip, g):
-        # x: decoder input from a coarser level
-        # skip: skip connection from encoder
-        # g: gating signal from a coarser feature map (usually previous decoder output)
         x = self.upconv(x)
         x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)
 
@@ -110,14 +104,6 @@ class DecoderBlock(nn.Module):
 
 class AttentionUNet(nn.Module):
     def __init__(self, num_classes, input_channels=3, base_filters=64):
-        """
-        Attention U-Net implementation in PyTorch.
-
-        Args:
-        - num_classes: Number of output classes for segmentation.
-        - input_channels: Number of input image channels (default: 3 for RGB).
-        - base_filters: Number of filters in the first layer (default: 64).
-        """
         super(AttentionUNet, self).__init__()
 
         # Encoder
@@ -130,36 +116,53 @@ class AttentionUNet(nn.Module):
         self.bottleneck = DoubleConv(base_filters * 8, base_filters * 16)
 
         # Decoder
-        # Gating signals: 
-        # dec1 uses bottleneck output as gating
-        # dec2 uses dec1 output as gating
-        # dec3 uses dec2 output as gating
-        # dec4 uses dec3 output as gating
-        self.dec1 = DecoderBlock(base_filters * 16, base_filters * 8)
-        self.dec2 = DecoderBlock(base_filters * 8, base_filters * 4)
-        self.dec3 = DecoderBlock(base_filters * 4, base_filters * 2)
-        self.dec4 = DecoderBlock(base_filters * 2, base_filters)
+        # dec1: in_channels=base_filters*16, out_channels=base_filters*8
+        # Skip from enc4 has base_filters*8 channels (s4)
+        # Gating from bottleneck has base_filters*16 channels (b)
+        self.dec1 = DecoderBlock(in_channels=base_filters * 16,
+                                 out_channels=base_filters * 8,
+                                 skip_channels=base_filters * 8,
+                                 gate_channels=base_filters * 16)
+
+        # dec2: in_channels=base_filters*8, out_channels=base_filters*4
+        # Skip from enc3 has base_filters*4 channels (s3)
+        # Gating from dec1 has base_filters*8 channels (d1)
+        self.dec2 = DecoderBlock(in_channels=base_filters * 8,
+                                 out_channels=base_filters * 4,
+                                 skip_channels=base_filters * 4,
+                                 gate_channels=base_filters * 8)
+
+        # dec3: in_channels=base_filters*4, out_channels=base_filters*2
+        # Skip from enc2 has base_filters*2 channels (s2)
+        # Gating from dec2 has base_filters*4 channels (d2)
+        self.dec3 = DecoderBlock(in_channels=base_filters * 4,
+                                 out_channels=base_filters * 2,
+                                 skip_channels=base_filters * 2,
+                                 gate_channels=base_filters * 4)
+
+        # dec4: in_channels=base_filters*2, out_channels=base_filters
+        # Skip from enc1 has base_filters channels (s1)
+        # Gating from dec3 has base_filters*2 channels (d3)
+        self.dec4 = DecoderBlock(in_channels=base_filters * 2,
+                                 out_channels=base_filters,
+                                 skip_channels=base_filters,
+                                 gate_channels=base_filters * 2)
 
         # Final output layer
         self.final_layer = nn.Conv2d(base_filters, num_classes, kernel_size=1)
 
     def forward(self, x):
-        # Encoder
         s1, p1 = self.enc1(x)
         s2, p2 = self.enc2(p1)
         s3, p3 = self.enc3(p2)
         s4, p4 = self.enc4(p3)
 
-        # Bottleneck
         b = self.bottleneck(p4)
 
-        # Decoder with attention
-        # First decoder block uses bottleneck as gating signal
         d1 = self.dec1(b, s4, g=b)
         d2 = self.dec2(d1, s3, g=d1)
         d3 = self.dec3(d2, s2, g=d2)
         d4 = self.dec4(d3, s1, g=d3)
 
-        # Final output
         outputs = self.final_layer(d4)
         return outputs
