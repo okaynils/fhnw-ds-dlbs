@@ -3,6 +3,7 @@ import torch
 import wandb
 import torch.nn as nn
 from torchmetrics import JaccardIndex
+from core.focal_loss import FocalLoss
 
 class Trainer:
     def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None):
@@ -18,7 +19,9 @@ class Trainer:
 
         self.model.to(self.device)
 
-        self.iou_metric = JaccardIndex(num_classes=19, task="multiclass").to(self.device)
+        # Initialize metrics
+        self.iou_metric_global = JaccardIndex(num_classes=19, task="multiclass", average="macro").to(self.device)
+        self.iou_metric_per_class = JaccardIndex(num_classes=19, task="multiclass", average="none").to(self.device)
 
         self._set_seed(self.seed)
         
@@ -64,62 +67,85 @@ class Trainer:
             if self.verbose:
                 print(f"Model saved to {save_path} with val_loss {val_loss:.4f}")
 
+    def _prepare_inputs(self, outputs, labels):
+        if isinstance(self.criterion, nn.CrossEntropyLoss):
+            # No additional processing for CrossEntropyLoss
+            return outputs, labels
+        elif isinstance(self.criterion, FocalLoss):
+            # Apply softmax for multiclass predictions
+            outputs = torch.nn.functional.softmax(outputs, dim=1)
+            # Reshape outputs and labels for FocalLoss
+            outputs = outputs.permute(0, 2, 3, 1).reshape(-1, outputs.shape[1])
+            labels = labels.view(-1)
+            return outputs, labels
+        else:
+            raise ValueError(f"Unsupported criterion type: {type(self.criterion)}")
+
     def _train_epoch(self, train_loader):
         self.model.train()
         running_loss = 0.0
-        self.iou_metric.reset()
+        self.iou_metric_global.reset()
+        self.iou_metric_per_class.reset()
 
         for images, labels, _ in train_loader:
             images, labels = images.to(self.device), labels.to(self.device, dtype=torch.long)
             
             self.optimizer.zero_grad()
-            outputs = self.model(images)
             
-            loss = self.criterion(outputs, labels)
+            outputs = self.model(images)  # Raw logits from the model
+            outputs, labels = self._prepare_inputs(outputs, labels)
+            
+            loss = self.criterion(outputs, labels)  # Compute loss
             loss.backward()
             self.optimizer.step()
 
             running_loss += loss.item()
 
-            _, predicted = outputs.max(1)
-            mask = labels != 255
-            self.iou_metric.update(predicted[mask], labels[mask])
+            _, predicted = outputs.max(1)  # Get the predicted class per pixel
+            mask = labels != 255  # Mask out ignored pixels
+            self.iou_metric_global.update(predicted[mask], labels[mask])  # Update global IoU
+            self.iou_metric_per_class.update(predicted[mask], labels[mask])  # Update per-class IoU
 
             del images, labels, outputs
             torch.cuda.empty_cache()
 
         epoch_loss = running_loss / len(train_loader)
-        epoch_iou = self.iou_metric.compute().item()
+        global_iou = self.iou_metric_global.compute().item()  # Overall IoU
+        per_class_iou = self.iou_metric_per_class.compute()  # IoU for each class
 
-        return epoch_loss, epoch_iou
+        return epoch_loss, global_iou, per_class_iou
 
     def _validate_epoch(self, val_loader):
         self.model.eval()
         running_loss = 0.0
-        self.iou_metric.reset()
+        self.iou_metric_global.reset()
+        self.iou_metric_per_class.reset()
 
         with torch.no_grad():
             for images, labels, _ in val_loader:
                 images, labels = images.to(self.device), labels.to(self.device, dtype=torch.long)
 
-                outputs = self.model(images)
-                loss = self.criterion(outputs, labels)
-
+                outputs = self.model(images)  # Raw logits from the model
+                outputs, labels = self._prepare_inputs(outputs, labels)
+                
+                loss = self.criterion(outputs, labels)  # Compute loss
                 running_loss += loss.item()
 
                 # Calculate IoU, ignoring 255-labeled pixels
-                _, predicted = outputs.max(1)
-                mask = labels != 255  # Create a mask for valid pixels
-                self.iou_metric.update(predicted[mask], labels[mask])
+                _, predicted = outputs.max(1)  # Get the predicted class per pixel
+                mask = labels != 255  # Mask out ignored pixels
+                self.iou_metric_global.update(predicted[mask], labels[mask])  # Update global IoU
+                self.iou_metric_per_class.update(predicted[mask], labels[mask])  # Update per-class IoU
 
                 # Clear cache to manage GPU memory
                 del images, labels, outputs
                 torch.cuda.empty_cache()
 
         epoch_loss = running_loss / len(val_loader)
-        epoch_iou = self.iou_metric.compute().item()
+        global_iou = self.iou_metric_global.compute().item()  # Overall IoU
+        per_class_iou = self.iou_metric_per_class.compute()  # IoU for each class
 
-        return epoch_loss, epoch_iou
+        return epoch_loss, global_iou, per_class_iou
 
     def _precheck(self):
         if not os.path.exists("models"):
@@ -135,20 +161,22 @@ class Trainer:
             self._initialize_weights()
 
             for epoch in range(self.epochs):
-                train_loss, train_iou = self._train_epoch(train_loader)
-                val_loss, val_iou = self._validate_epoch(val_loader)
+                train_loss, train_global_iou, train_per_class_iou = self._train_epoch(train_loader)
+                val_loss, val_global_iou, val_per_class_iou = self._validate_epoch(val_loader)
 
                 if self.verbose:
                     print(f"Epoch {epoch+1}/{self.epochs} - "
-                        f"Train Loss: {train_loss:.4f}, Train IoU: {train_iou:.4f} - "
-                        f"Val Loss: {val_loss:.4f}, Val IoU: {val_iou:.4f}")
+                          f"Train Loss: {train_loss:.4f}, Train Global IoU: {train_global_iou:.4f} - "
+                          f"Val Loss: {val_loss:.4f}, Val Global IoU: {val_global_iou:.4f}")
 
                 wandb.log({
                     "epoch": epoch+1,
                     "train_loss": train_loss,
-                    "train_iou": train_iou,
+                    "train_global_iou": train_global_iou,
                     "val_loss": val_loss,
-                    "val_iou": val_iou
+                    "val_global_iou": val_global_iou,
+                    **{f"train_iou_class_{i}": train_per_class_iou[i].item() for i in range(len(train_per_class_iou))},
+                    **{f"val_iou_class_{i}": val_per_class_iou[i].item() for i in range(len(val_per_class_iou))}
                 })
 
                 self._save_model(val_loss)
@@ -156,10 +184,11 @@ class Trainer:
             print(f'Model {self.run_name} already exists! Skipping training.')
 
     def test(self, test_loader):
-        test_loss, test_iou = self._validate_epoch(test_loader)
+        test_loss, test_global_iou, test_per_class_iou = self._validate_epoch(test_loader)
 
-        print(f"Test Loss: {test_loss:.4f} - Test IoU: {test_iou:.4f}")
+        print(f"Test Loss: {test_loss:.4f} - Test Global IoU: {test_global_iou:.4f}")
         wandb.log({
             "test_loss": test_loss,
-            "test_iou": test_iou
+            "test_global_iou": test_global_iou,
+            **{f"test_iou_class_{i}": test_per_class_iou[i].item() for i in range(len(test_per_class_iou))}
         })

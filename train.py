@@ -9,6 +9,7 @@ from data.utils import *
 from sklearn.utils.class_weight import compute_class_weight
 import torch
 import torch.nn as nn
+from core.focal_loss import FocalLoss
 
 @hydra.main(config_path="configs", config_name="config")
 def main(cfg: DictConfig):
@@ -80,7 +81,11 @@ def main(cfg: DictConfig):
 
     model = hydra.utils.instantiate(cfg.model)
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
-    criterion = nn.CrossEntropyLoss(ignore_index=255, weight=class_weights)
+    
+    if cfg.criterion._target_ == 'torch.nn.CrossEntropyLoss':
+        criterion = nn.CrossEntropyLoss(ignore_index=255, weight=class_weights)
+    if cfg.criterion._target_ == 'core.FocalLoss':
+        criterion = FocalLoss(gamma=cfg.criterion.gamma, weights=class_weights, ignore_index=255)
 
     print(f'--- Model Configuration of {cfg.model._target_} ---')
     print(model)
