@@ -11,11 +11,17 @@ import torch
 import torch.nn as nn
 from core.focal_loss import FocalLoss
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @hydra.main(config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     os.chdir(hydra.utils.get_original_cwd())
-    print(OmegaConf.to_yaml(cfg))
+    print(OmegaConf.to_yaml(cfg), flush=True)
     
+    logger.info('Test')
+
     dataset_splits = custom_split_dataset_with_det(
         base_data_path=cfg.dataset.images_dir,
         base_labels_path=cfg.dataset.labels_dir,
@@ -61,7 +67,7 @@ def main(cfg: DictConfig):
     class_weights = None
 
     if os.path.exists(class_weights_file):
-        print(f"Loading class weights from {class_weights_file}")
+        print(f"Loading class weights from {class_weights_file}", flush=True)
         class_weights = torch.load(class_weights_file, map_location=cfg.device)
     else:
         print("Calculating class weights...")
@@ -87,7 +93,7 @@ def main(cfg: DictConfig):
     if cfg.criterion._target_ == 'core.FocalLoss':
         criterion = FocalLoss(gamma=cfg.criterion.gamma, weights=class_weights, ignore_index=255)
 
-    print(f'--- Model Configuration of {cfg.model._target_} ---')
+    print(f'--- Model Configuration of {cfg.model._target_} ---', flush=True)
     print(model)
 
     trainer = Trainer(
