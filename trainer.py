@@ -1,9 +1,13 @@
 import os
+import logging
+
 import torch
 import wandb
 import torch.nn as nn
 from torchmetrics import JaccardIndex
 from core.focal_loss import FocalLoss
+
+logger = logging.getLogger(__name__)
 
 class Trainer:
     def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None):
@@ -29,7 +33,7 @@ class Trainer:
             wandb.init(project="dlbs", name=self.run_name)
             self.run_id = wandb.run.id
         else:
-            print(f'Model trainer was already initialized. Skipping wandb initialization.')
+            logger.info(f'Model trainer was already initialized. Skipping wandb initialization.')
 
         self.best_val_loss = float('inf')
 
@@ -65,7 +69,7 @@ class Trainer:
             wandb.save(model_name)
 
             if self.verbose:
-                print(f"Model saved to {save_path} with val_loss {val_loss:.4f}")
+                logger.info(f"Model saved to {save_path} with val_loss {val_loss:.4f}")
 
     def _prepare_inputs(self, outputs, labels):
         if isinstance(self.criterion, nn.CrossEntropyLoss):
@@ -165,7 +169,7 @@ class Trainer:
                 val_loss, val_global_iou, val_per_class_iou = self._validate_epoch(val_loader)
 
                 if self.verbose:
-                    print(f"Epoch {epoch+1}/{self.epochs} - "
+                    logger.info(f"Epoch {epoch+1}/{self.epochs} - "
                           f"Train Loss: {train_loss:.4f}, Train Global IoU: {train_global_iou:.4f} - "
                           f"Val Loss: {val_loss:.4f}, Val Global IoU: {val_global_iou:.4f}")
 
@@ -181,12 +185,12 @@ class Trainer:
 
                 self._save_model(val_loss)
         else:
-            print(f'Model {self.run_name} already exists! Skipping training.')
+            logger.info(f'Model {self.run_name} already exists! Skipping training.')
 
     def test(self, test_loader):
         test_loss, test_global_iou, test_per_class_iou = self._validate_epoch(test_loader)
 
-        print(f"Test Loss: {test_loss:.4f} - Test Global IoU: {test_global_iou:.4f}")
+        logger.info(f"Test Loss: {test_loss:.4f} - Test Global IoU: {test_global_iou:.4f}")
         wandb.log({
             "test_loss": test_loss,
             "test_global_iou": test_global_iou,
