@@ -6,7 +6,7 @@ defaults:
   - experiment: unet_baseline
 
 run_name: "example_run"
-epochs: 100
+epochs: 50
 seed: 1337
 device: "cuda"
 

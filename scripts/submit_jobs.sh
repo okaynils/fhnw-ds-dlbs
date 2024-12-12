@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 00:30:00
+#SBATCH -t 02:00:00
 #SBATCH -p performance
 #SBATCH --gpus=1
 #SBATCH --job-name=unet_overfit_1

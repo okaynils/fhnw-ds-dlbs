@@ -1,10 +1,21 @@
-defaults:
-  - experiment: unet_overfit_2
+# @package _global_
+
+run_name: "unet_ce_lr_0.00001"
+experiment_name: "unet_ce_lr_0.00001"
+
+trainer:
+  run_name: "unet_ce_lr_0.00001"
 
 optimizer:
   _target_: torch.optim.Adam
   lr: 0.00001
   weight_decay: 0.0001
+
+model:
+  _target_: core.VanillaUNet
+  num_classes: 19
+  input_channels: 3 
+  base_filters: 128
 
 criterion:
   _target_: torch.nn.CrossEntropyLoss

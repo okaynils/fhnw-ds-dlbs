@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def main(cfg: DictConfig):
     logger.info(f"Starting run: {cfg.run_name}")
     os.chdir(hydra.utils.get_original_cwd())
-    logger.info(OmegaConf.to_yaml(cfg), flush=True)
+    logger.info(OmegaConf.to_yaml(cfg))
     
     dataset_splits = custom_split_dataset_with_det(
         base_data_path=cfg.dataset.images_dir,
