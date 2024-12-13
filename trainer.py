@@ -200,6 +200,9 @@ class Trainer:
             logger.info(f'Model {self.run_name} already exists! Skipping training.')
 
     def test(self, test_loader):
+        if not wandb.run:
+            wandb.init(project="dlbs", name=f"{self.run_name}_test", reinit=True)
+        
         test_loss, test_global_iou, test_per_class_iou = self._validate_epoch(test_loader)
 
         logger.info(f"Test Loss: {test_loss:.4f} - Test Global IoU: {test_global_iou:.4f}")
