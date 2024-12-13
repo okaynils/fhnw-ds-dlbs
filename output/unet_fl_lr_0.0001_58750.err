@@ -1,0 +1,20 @@
+/var/lib/slurm/slurmd/job58750/slurm_script: line 12: ./venv/bin/activate: No such file or directory
+/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/train.py:18: UserWarning: 
+The version_base parameter is not specified.
+Please specify a compatability version level, or None.
+Will assume defaults for version 1.1
+  @hydra.main(config_path="configs", config_name="config")
+/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/.venv/lib/python3.12/site-packages/hydra/_internal/hydra.py:119: UserWarning: Future Hydra versions will no longer change working directory at job runtime by default.
+See https://hydra.cc/docs/1.2/upgrades/1.1_to_1.2/changes_to_job_working_dir/ for more information.
+  ret = run_job(
+/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/train.py:70: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  class_weights = torch.load(class_weights_file, map_location=cfg.device)
+wandb: Using wandb-core as the SDK backend. Please refer to https://wandb.me/wandb-core for more information.
+wandb: Currently logged in as: okaynils. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.18.5
+wandb: Run data is saved locally in /mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/wandb/run-20241212_180139-22zh7n7a
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run unet_fl_lr_0.0001
+wandb: ⭐️ View project at https://wandb.ai/okaynils/dlbs
+wandb: 🚀 View run at https://wandb.ai/okaynils/dlbs/runs/22zh7n7a
+slurmstepd-server0090: error: *** JOB 58750 ON server0090 CANCELLED AT 2024-12-12T20:00:57 DUE TO TIME LIMIT ***

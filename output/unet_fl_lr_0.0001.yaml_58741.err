@@ -1,0 +1,41 @@
+/var/lib/slurm/slurmd/job58741/slurm_script: line 9: ./venv/bin/activate: No such file or directory
+/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/train.py:18: UserWarning: 
+The version_base parameter is not specified.
+Please specify a compatability version level, or None.
+Will assume defaults for version 1.1
+  @hydra.main(config_path="configs", config_name="config")
+/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/.venv/lib/python3.12/site-packages/hydra/_internal/hydra.py:119: UserWarning: Future Hydra versions will no longer change working directory at job runtime by default.
+See https://hydra.cc/docs/1.2/upgrades/1.1_to_1.2/changes_to_job_working_dir/ for more information.
+  ret = run_job(
+/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/train.py:70: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  class_weights = torch.load(class_weights_file, map_location=cfg.device)
+wandb: Using wandb-core as the SDK backend. Please refer to https://wandb.me/wandb-core for more information.
+wandb: Currently logged in as: okaynils. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.18.5
+wandb: Run data is saved locally in /mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/wandb/run-20241212_172616-hhviz2bt
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run unet_fl_lr_0.0001
+wandb: ⭐️ View project at https://wandb.ai/okaynils/dlbs
+wandb: 🚀 View run at https://wandb.ai/okaynils/dlbs/runs/hhviz2bt
+Error executing job with overrides: ['experiment=tune/unet_fl_lr_0.0001.yaml']
+Traceback (most recent call last):
+  File "/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/train.py", line 109, in main
+    trainer.run(train_loader, val_loader)
+  File "/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/trainer.py", line 168, in run
+    train_loss, train_global_iou, train_per_class_iou = self._train_epoch(train_loader)
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/trainer.py", line 102, in _train_epoch
+    loss = self.criterion(outputs, labels)  # Compute loss
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/nas05/clusterdata01/home2/n.fahrni/classes/dlbs/core/focal_loss.py", line 90, in forward
+    nll = -torch.log(self.eps + pt)
+                     ~~~~~~~~~^~~~
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 MiB. GPU 0 has a total capacity of 10.57 GiB of which 3.06 MiB is free. Process 3818419 has 2.52 GiB memory in use. Process 952865 has 494.00 MiB memory in use. Process 2806715 has 1.65 GiB memory in use. Process 2941299 has 346.00 MiB memory in use. Process 4165965 has 868.00 MiB memory in use. Including non-PyTorch memory, this process has 4.72 GiB memory in use. Of the allocated memory 4.03 GiB is allocated by PyTorch, and 525.93 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
