@@ -6,6 +6,8 @@ import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tqdm import trange
+from torchvision import transforms
+from PIL import Image
 
 def custom_split_dataset_with_det(
     base_data_path,
@@ -119,3 +121,29 @@ def analyze_class_distribution(dataset, num_classes, dataset_name):
     class_distribution = {cls: count / total_pixels for cls, count in class_counts.items()}
 
     return class_counts, class_distribution
+
+def calculate_normalization_stats(image_filenames, base_data_path: str):
+    total_sum = torch.zeros(3)
+    total_squared_sum = torch.zeros(3)
+    total_pixel_count = 0
+
+    transform = transforms.ToTensor()
+
+    for image_path in image_filenames:
+        image_path = os.path.join(base_data_path, image_path)
+
+        image = Image.open(image_path).convert('RGB')
+
+        tensor_image = transform(image)
+
+        pixels = tensor_image.numel() / 3
+
+        total_sum += tensor_image.sum(dim=(1, 2))
+        total_squared_sum += (tensor_image ** 2).sum(dim=(1, 2))
+
+        total_pixel_count += pixels
+
+    mean = total_sum / total_pixel_count
+    std = torch.sqrt(total_squared_sum / total_pixel_count - mean ** 2)
+
+    return mean, std

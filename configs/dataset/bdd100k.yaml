@@ -10,6 +10,9 @@ transform:
     - _target_: torchvision.transforms.Resize
       size: [128, 128]
     - _target_: torchvision.transforms.ToTensor
+    - _target_: torchvision.transforms.Normalize
+      mean: [0.3654, 0.4002, 0.4055] # metrics calculated on train partition
+      std: [0.2526, 0.2644, 0.2755] # metrics calculated on train partition
 target_transform:
   _target_: torchvision.transforms.Compose
   transforms:

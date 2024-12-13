@@ -10,7 +10,7 @@ from core.focal_loss import FocalLoss
 logger = logging.getLogger(__name__)
 
 class Trainer:
-    def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None):
+    def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None, early_stopping_patience=5):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -20,6 +20,7 @@ class Trainer:
         self.device = device
         self.verbose = verbose
         self.run_name = run_name
+        self.early_stopping_patience = early_stopping_patience
 
         self.model.to(self.device)
 
@@ -28,7 +29,7 @@ class Trainer:
         self.iou_metric_per_class = JaccardIndex(num_classes=19, task="multiclass", average="none").to(self.device)
 
         self._set_seed(self.seed)
-        
+
         if not self._precheck():
             wandb.init(project="dlbs", name=self.run_name)
             self.run_id = wandb.run.id
@@ -36,6 +37,7 @@ class Trainer:
             logger.info(f'Model trainer was already initialized. Skipping wandb initialization.')
 
         self.best_val_loss = float('inf')
+        self.early_stopping_counter = 0  # Counter for early stopping
 
         os.makedirs("models", exist_ok=True)
 
@@ -63,9 +65,9 @@ class Trainer:
             self.best_val_loss = val_loss
             model_name = f"{self.run_name}_{self.run_id}.pth"
             save_path = os.path.join("models", model_name)
-            
+
             torch.save(self.model.state_dict(), save_path)
-            
+
             wandb.save(model_name)
 
             if self.verbose:
@@ -93,12 +95,12 @@ class Trainer:
 
         for images, labels, _ in train_loader:
             images, labels = images.to(self.device), labels.to(self.device, dtype=torch.long)
-            
+
             self.optimizer.zero_grad()
-            
+
             outputs = self.model(images)  # Raw logits from the model
             outputs, labels = self._prepare_inputs(outputs, labels)
-            
+
             loss = self.criterion(outputs, labels)  # Compute loss
             loss.backward()
             self.optimizer.step()
@@ -131,7 +133,7 @@ class Trainer:
 
                 outputs = self.model(images)  # Raw logits from the model
                 outputs, labels = self._prepare_inputs(outputs, labels)
-                
+
                 loss = self.criterion(outputs, labels)  # Compute loss
                 running_loss += loss.item()
 
@@ -184,6 +186,16 @@ class Trainer:
                 })
 
                 self._save_model(val_loss)
+
+                # Early stopping logic
+                if val_loss < self.best_val_loss:
+                    self.early_stopping_counter = 0
+                else:
+                    self.early_stopping_counter += 1
+                    if self.early_stopping_counter >= self.early_stopping_patience:
+                        logger.info(f"Early stopping triggered after {epoch+1} epochs.")
+                        break
+
         else:
             logger.info(f'Model {self.run_name} already exists! Skipping training.')
 
