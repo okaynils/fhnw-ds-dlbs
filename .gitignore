@@ -5,6 +5,7 @@ __pycache__
 .log
 /models/*
 /outputs/*
+/output/*
 
 .venv
 data/*
