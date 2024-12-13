@@ -2,9 +2,10 @@
 #SBATCH -t 02:00:00
 #SBATCH -p performance
 #SBATCH --gpus=1
-#SBATCH --job-name=unet_overfit_1
-#SBATCH --output=unet_overfit_1_%j.out
-#SBATCH --error=unet_overfit_1_%j.err
+#SBATCH --mem 18G
+#SBATCH --job-name=dlbs_unet_fl_lr_0.0001
+#SBATCH --output=output/unet_fl_lr_0.0001_%j.out
+#SBATCH --error=output/unet_fl_lr_0.0001_%j.err
 
 experiment=$1
 
