@@ -20,7 +20,7 @@ class Trainer:
         self.device = device
         self.verbose = verbose
         self.run_name = run_name
-        self.early_stopping_patience = early_stopping_patience,
+        self.early_stopping_patience = early_stopping_patience
         self.n_classes = n_classes
 
         self.model.to(self.device)
