@@ -10,7 +10,7 @@ from core.focal_loss import FocalLoss
 logger = logging.getLogger(__name__)
 
 class Trainer:
-    def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None, early_stopping_patience=5, n_classes=19):
+    def __init__(self, model, criterion, optimizer, epochs, seed, device, verbose, run_name, weight_init=None, early_stopping_patience=7, n_classes=19):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -182,14 +182,14 @@ class Trainer:
                 })
 
                 self._save_model(val_loss)
-
-                if val_loss <= self.best_val_loss:
-                    self.early_stopping_counter = 0
-                else:
-                    self.early_stopping_counter += 1
-                    if self.early_stopping_counter >= self.early_stopping_patience:
-                        logger.info(f"Early stopping triggered after {epoch+1} epochs.")
-                        break
+                if self.early_stopping_patience != None:
+                    if val_loss <= self.best_val_loss:
+                        self.early_stopping_counter = 0
+                    else:
+                        self.early_stopping_counter += 1
+                        if self.early_stopping_counter >= self.early_stopping_patience:
+                            logger.info(f"Early stopping triggered after {epoch+1} epochs.")
+                            break
 
         else:
             logger.info(f'Model {self.run_name} already exists! Skipping training.')

@@ -3,3 +3,4 @@ epochs: 50
 seed: 1337
 device: "cuda"
 verbose: true
+early_stopping_patience: 7

@@ -11,6 +11,7 @@ model:
 
 trainer:
   run_name: "unet_overfit_2"
+  early_stopping_patience: null
 
 optimizer:
   _target_: torch.optim.Adam

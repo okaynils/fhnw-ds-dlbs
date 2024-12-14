@@ -94,7 +94,7 @@ def main(cfg: DictConfig):
 
     logger.info(f'--- Model Configuration of {cfg.model._target_} ---')
     logger.info(model)
-
+    
     trainer = Trainer(
         model=model,
         criterion=criterion,
@@ -104,7 +104,8 @@ def main(cfg: DictConfig):
         device=cfg.device,
         verbose=cfg.verbose,
         run_name=cfg.run_name,
-        n_classes=5
+        early_stopping_patience=cfg.trainer.early_stopping_patience,
+        n_classes=cfg.model.num_classes
     )
 
     trainer.run(train_loader, val_loader)
