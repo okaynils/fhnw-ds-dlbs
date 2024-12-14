@@ -1,7 +1,8 @@
 #!/bin/bash
-#SBATCH -t 02:00:00
+#SBATCH -t 01:30:00
 #SBATCH -p performance
 #SBATCH --gpus=1
+#SBATCH --exclusive
 #SBATCH --mem 18G
 #SBATCH --job-name=dlbs_unet_fl_lr_0.0001
 #SBATCH --output=output/unet_fl_lr_0.0001_%j.out
