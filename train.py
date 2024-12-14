@@ -74,7 +74,7 @@ def main(cfg: DictConfig):
 
         flat_labels = np.concatenate([np.array(mask).flatten() for mask in all_masks])
 
-        classes = list(range(0, 19))
+        classes = list(range(0, 5))
         classes.append(255)
 
         class_weights = torch.tensor(
@@ -103,7 +103,8 @@ def main(cfg: DictConfig):
         seed=cfg.seed,
         device=cfg.device,
         verbose=cfg.verbose,
-        run_name=cfg.run_name
+        run_name=cfg.run_name,
+        n_classes=5
     )
 
     trainer.run(train_loader, val_loader)

@@ -4,7 +4,7 @@ experiment_name: "unet_baseline"
 
 model:
   _target_: core.UNet
-  num_classes: 19
+  num_classes: 5
   encoder_dims: [64, 128, 256]
   decoder_dims: [1024, 512, 256]
 

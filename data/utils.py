@@ -147,3 +147,18 @@ def calculate_normalization_stats(image_filenames, base_data_path: str):
     std = torch.sqrt(total_squared_sum / total_pixel_count - mean ** 2)
 
     return mean, std
+
+class RemapClasses:
+    def __init__(self, old_to_new):
+        """
+        old_to_new: dict mapping old class indices to new class indices.
+                    Any class index not in old_to_new will be set to 255.
+        """
+        self.old_to_new = old_to_new
+
+    def __call__(self, mask):
+        # Create a new mask filled with 255 (ignore)
+        new_mask = torch.full_like(mask, 255)
+        for old_class, new_class in self.old_to_new.items():
+            new_mask[mask == old_class] = new_class
+        return new_mask

@@ -13,6 +13,7 @@ transform:
     - _target_: torchvision.transforms.Normalize
       mean: [0.3654, 0.4002, 0.4055]
       std: [0.2526, 0.2644, 0.2755]
+
 target_transform:
   _target_: torchvision.transforms.Compose
   transforms:
@@ -20,5 +21,13 @@ target_transform:
       size: [128, 128]
       interpolation: 0
     - _target_: data.utils.ConvertToLongTensor
+    - _target_: data.utils.RemapClasses
+      old_to_new:
+        0: 0
+        2: 1
+        8: 2
+        10: 3
+        13: 4
+
 batch_size: 16
 class_weights_file: "data/class_weights.pt"

@@ -5,7 +5,7 @@ experiment_name: "unet_focal_loss"
 
 model:
   _target_: core.VanillaUNet
-  num_classes: 19
+  num_classes: 5
   input_channels: 3 
   base_filters: 128
 

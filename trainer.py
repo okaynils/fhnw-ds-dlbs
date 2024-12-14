@@ -183,7 +183,7 @@ class Trainer:
 
                 self._save_model(val_loss)
 
-                if val_loss < self.best_val_loss:
+                if val_loss <= self.best_val_loss:
                     self.early_stopping_counter = 0
                 else:
                     self.early_stopping_counter += 1
