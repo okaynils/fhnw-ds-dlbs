@@ -13,7 +13,7 @@ fi
 
 # Submit the job to Slurm
 sbatch \
-  --time=01:30:00 \
+  --time=02:00:00 \
   --partition=performance \
   --gpus=1 \
   --exclusive \
