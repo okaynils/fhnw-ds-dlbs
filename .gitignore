@@ -9,6 +9,7 @@ __pycache__
 
 .venv
 data/*
+!data/*.py
 !data/*.geojson
 
 .DS_Store
