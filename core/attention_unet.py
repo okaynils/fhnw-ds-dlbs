@@ -2,20 +2,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class DoubleConv(nn.Module):
     """
-    Double convolution: (Conv2D -> BatchNorm -> ReLU) * 2
+    Double convolution: (Conv2D -> BatchNorm -> ReLU -> Dropout?) * 2
     """
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dropout_prob=0.0):
         super(DoubleConv, self).__init__()
+        self.dropout_prob = dropout_prob
+
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
+            nn.Dropout2d(self.dropout_prob),
+            
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
+            nn.Dropout2d(self.dropout_prob),
         )
 
     def forward(self, x):
@@ -26,9 +30,9 @@ class EncoderBlock(nn.Module):
     """
     Encoder block: DoubleConv -> MaxPool2D
     """
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dropout_prob=0.0):
         super(EncoderBlock, self).__init__()
-        self.conv = DoubleConv(in_channels, out_channels)
+        self.conv = DoubleConv(in_channels, out_channels, dropout_prob=dropout_prob)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
     def forward(self, x):
@@ -48,18 +52,15 @@ class AttentionBlock(nn.Module):
             nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(F_int)
         )
-
         self.W_x = nn.Sequential(
             nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(F_int)
         )
-
         self.psi = nn.Sequential(
             nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(1),
             nn.Sigmoid()
         )
-
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x, g):
@@ -70,12 +71,11 @@ class AttentionBlock(nn.Module):
         g1 = self.W_g(g)
         x1 = self.W_x(x)
 
-        # Align shapes (if necessary, via interpolation)
-        # Ensure g1 and x1 spatial dims match
+        # If gating and skip shapes differ, interpolate gating
         if g1.shape[2:] != x1.shape[2:]:
             g1 = F.interpolate(g1, size=x1.shape[2:], mode="bilinear", align_corners=False)
 
-        # Compute attention coefficients
+        # Attention coefficients
         psi = self.relu(g1 + x1)
         psi = self.psi(psi)
 
@@ -84,11 +84,14 @@ class AttentionBlock(nn.Module):
 
 
 class DecoderBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, skip_channels, gate_channels):
+    """
+    Decoder block: (UpConv -> Attention -> Concat) -> DoubleConv
+    """
+    def __init__(self, in_channels, out_channels, skip_channels, gate_channels, dropout_prob=0.0):
         super(DecoderBlock, self).__init__()
         self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
         self.attention = AttentionBlock(F_g=gate_channels, F_l=skip_channels, F_int=skip_channels // 2)
-        self.conv = DoubleConv(out_channels * 2, out_channels)
+        self.conv = DoubleConv(out_channels * 2, out_channels, dropout_prob=dropout_prob)
 
     def forward(self, x, skip, g):
         x = self.upconv(x)
@@ -103,50 +106,42 @@ class DecoderBlock(nn.Module):
 
 
 class AttentionUNet(nn.Module):
-    def __init__(self, num_classes, input_channels=3, base_filters=64):
+    def __init__(self, num_classes, input_channels=3, base_filters=64, dropout_prob=0.0):
         super(AttentionUNet, self).__init__()
 
         # Encoder
-        self.enc1 = EncoderBlock(input_channels, base_filters)
-        self.enc2 = EncoderBlock(base_filters, base_filters * 2)
-        self.enc3 = EncoderBlock(base_filters * 2, base_filters * 4)
-        self.enc4 = EncoderBlock(base_filters * 4, base_filters * 8)
+        self.enc1 = EncoderBlock(input_channels, base_filters, dropout_prob=dropout_prob)
+        self.enc2 = EncoderBlock(base_filters, base_filters * 2, dropout_prob=dropout_prob)
+        self.enc3 = EncoderBlock(base_filters * 2, base_filters * 4, dropout_prob=dropout_prob)
+        self.enc4 = EncoderBlock(base_filters * 4, base_filters * 8, dropout_prob=dropout_prob)
 
         # Bottleneck
-        self.bottleneck = DoubleConv(base_filters * 8, base_filters * 16)
+        self.bottleneck = DoubleConv(base_filters * 8, base_filters * 16, dropout_prob=dropout_prob)
 
         # Decoder
-        # dec1: in_channels=base_filters*16, out_channels=base_filters*8
-        # Skip from enc4 has base_filters*8 channels (s4)
-        # Gating from bottleneck has base_filters*16 channels (b)
         self.dec1 = DecoderBlock(in_channels=base_filters * 16,
                                  out_channels=base_filters * 8,
                                  skip_channels=base_filters * 8,
-                                 gate_channels=base_filters * 16)
+                                 gate_channels=base_filters * 16,
+                                 dropout_prob=dropout_prob)
 
-        # dec2: in_channels=base_filters*8, out_channels=base_filters*4
-        # Skip from enc3 has base_filters*4 channels (s3)
-        # Gating from dec1 has base_filters*8 channels (d1)
         self.dec2 = DecoderBlock(in_channels=base_filters * 8,
                                  out_channels=base_filters * 4,
                                  skip_channels=base_filters * 4,
-                                 gate_channels=base_filters * 8)
+                                 gate_channels=base_filters * 8,
+                                 dropout_prob=dropout_prob)
 
-        # dec3: in_channels=base_filters*4, out_channels=base_filters*2
-        # Skip from enc2 has base_filters*2 channels (s2)
-        # Gating from dec2 has base_filters*4 channels (d2)
         self.dec3 = DecoderBlock(in_channels=base_filters * 4,
                                  out_channels=base_filters * 2,
                                  skip_channels=base_filters * 2,
-                                 gate_channels=base_filters * 4)
+                                 gate_channels=base_filters * 4,
+                                 dropout_prob=dropout_prob)
 
-        # dec4: in_channels=base_filters*2, out_channels=base_filters
-        # Skip from enc1 has base_filters channels (s1)
-        # Gating from dec3 has base_filters*2 channels (d3)
         self.dec4 = DecoderBlock(in_channels=base_filters * 2,
                                  out_channels=base_filters,
                                  skip_channels=base_filters,
-                                 gate_channels=base_filters * 2)
+                                 gate_channels=base_filters * 2,
+                                 dropout_prob=dropout_prob)
 
         # Final output layer
         self.final_layer = nn.Conv2d(base_filters, num_classes, kernel_size=1)

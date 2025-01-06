@@ -2,3 +2,4 @@ _target_: core.AttentionUNet
 num_classes: 5
 input_channels: 3 
 base_filters: 64
+dropout_prob: 0.0

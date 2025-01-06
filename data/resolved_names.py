@@ -19,3 +19,11 @@ class_dict = {
     17: "motorcycle",
     18: "bicycle"
 }
+
+class_dict_remapped = {
+    0: "road",
+    1: "building",
+    2: "vegetation",
+    3: "sky",
+    4: "car"
+}
