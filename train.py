@@ -99,7 +99,7 @@ def main(cfg: DictConfig):
         model=model,
         criterion=criterion,
         optimizer=optimizer,
-        epochs=cfg.epochs,
+        epochs=cfg.trainer.epochs,
         seed=cfg.seed,
         device=cfg.device,
         verbose=cfg.verbose,

@@ -12,6 +12,7 @@ model:
 
 trainer:
   run_name: "unet_attn_dropout_0.3"
+  epochs: 200
 
 optimizer:
   _target_: torch.optim.Adam
