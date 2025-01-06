@@ -4,6 +4,7 @@
 # Example: ./submit_jobs.sh unet_overfit_1
 
 experiment=$1
+time=$2
 
 if [ -z "$experiment" ]; then
   echo "Error: No experiment name provided."
@@ -13,7 +14,7 @@ fi
 
 # Submit the job to Slurm
 sbatch \
-  --time=02:00:00 \
+  --time="$time" \
   --partition=performance \
   --gpus=1 \
   --exclusive \

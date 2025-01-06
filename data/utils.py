@@ -162,3 +162,15 @@ class RemapClasses:
         for old_class, new_class in self.old_to_new.items():
             new_mask[mask == old_class] = new_class
         return new_mask
+    
+def unnormalize(img, mean, std):
+    if not isinstance(mean, torch.Tensor):
+        mean = torch.tensor(mean)
+    if not isinstance(std, torch.Tensor):
+        std = torch.tensor(std)
+
+    mean = mean.view(-1, 1, 1)
+    std = std.view(-1, 1, 1)
+    img = std * img + mean
+    img = torch.clip(img, 0, 1)
+    return img
