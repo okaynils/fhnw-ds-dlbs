@@ -1,113 +1,232 @@
+import copy
 import os
+from omegaconf import OmegaConf
 
+import torch
+import torch.nn as nn
 import wandb
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import torch
+import matplotlib.colors as mcolors
 
-MODELS_PATH = "models"
+from data.utils import unnormalize, RemapClasses
+from data import class_dict_remapped
+
+mean = torch.tensor([0.3652, 0.3999, 0.4053])
+std = torch.tensor([0.2527, 0.2645, 0.2755])
 
 class Analyzer:
-    def __init__(self, run_id, project_name, entity_name, test_dataset, model, device="cpu"):
-        """
-        Initializes the Analyzer object with run details.
-
-        Parameters:
-            run_id (str): The ID of the wandb run.
-            project_name (str): The name of the wandb project.
-            entity_name (str): The name of the wandb entity.
-        """
-        self.run_id = run_id
+    def __init__(self, model: nn.Module, device: str="cpu", project_name: str="dlbs", entity_name: str="okaynils"):
+        self.model = model
+        self.device = device
         self.project_name = project_name
         self.entity_name = entity_name
         self.history = None
-        self.test_dataset = test_dataset
-        self.device = device
-        self.model = model.to(device)
-
-    def _load_model(self):
-        models = os.listdir(MODELS_PATH)
+        self.run_name = None
+        self.elapsed_time = None
+    
+    def model_receipt(self):
+        total_params = sum(p.numel() for p in self.model.parameters())
+        trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        non_trainable_params = total_params - trainable_params
+        device = next(self.model.parameters()).device
         
+        print(f"--- Model Receipt for {self.model.__class__.__name__} ---")
+        if self.elapsed_time:
+            print(f"\nTraining Time: {self.elapsed_time/60**2:.2f} hours")
+        print(f"Total parameters: {total_params}")
+        print(f"Trainable parameters: {trainable_params}")
+        print(f"Non-trainable parameters: {non_trainable_params}")
+        print(f"Device: {device}")
+        
+        print("\nModel Architecture:\n")
+        print(self.model)
+        
+    def plot(self, run_id: str):
+        self._fetch_data(run_id)
+
+        # Convert self.history to a list to make it subscriptable
+        history_list = list(self.history)
+        
+        train_loss = [entry['train_loss'] for entry in history_list if 'train_loss' in entry and entry['train_loss'] is not None]
+        val_loss = [entry['val_loss'] for entry in history_list if 'val_loss' in entry and entry['val_loss'] is not None]
+        val_global_iou = [entry['val_global_iou'] for entry in history_list if 'val_global_iou' in entry and entry['val_global_iou'] is not None]
+        
+        contains_test_metrics = any('test_city_iou' in entry for entry in history_list)
+        
+        # Test IoU metrics (single values)
+        test_city_iou = None
+        test_non_city_iou = None
+        test_class_ious = []
+        if contains_test_metrics:
+            # Retrieve the last entry that contains the test metrics
+            last_test_entry = next(entry for entry in reversed(history_list) if 'test_city_iou' in entry)
+            test_city_iou = last_test_entry['test_city_iou']
+            test_non_city_iou = last_test_entry['test_non_city_iou']
+            for i in range(5):
+                test_class_iou = last_test_entry.get(f'test_iou_class_{i}', None)
+                if test_class_iou is not None:
+                    test_class_ious.append(test_class_iou)
+
+        val_class_ious = []
+        for i in range(5):
+            val_class_iou = [entry[f'val_iou_class_{i}'] for entry in history_list if f'val_iou_class_{i}' in entry and entry[f'val_iou_class_{i}'] is not None]
+            val_class_ious.append(val_class_iou)
+
+        # Define a color map for the classes
+        colors = list(mcolors.TABLEAU_COLORS.values())
+        class_colors = {i: colors[i % len(colors)] for i in range(len(val_class_ious))}
+
+        # Plotting
+        if contains_test_metrics:
+            fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+        else: 
+            fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+        
+        # Loss curves
+        axes[0].plot(train_loss, label='Train Loss', zorder=3)
+        axes[0].plot(val_loss, label='Validation Loss', zorder=2)
+        axes[0].grid(True, zorder=1)
+        axes[0].set_title("Loss Curves")
+        axes[0].set_xlabel("Epoch")
+        axes[0].set_ylabel("Loss")
+        axes[0].legend()
+        
+        # Validation IoU
+        axes[1].plot(val_global_iou, label='Validation Global IoU', zorder=3)
+        for i, val_class_iou in enumerate(val_class_ious):
+            axes[1].plot(val_class_iou, label=f'{class_dict_remapped[i].capitalize()} IoU', linestyle='--', color=class_colors[i], zorder=2)
+        axes[1].grid(True, zorder=1)
+        axes[1].set_title("Validation Global IoU")
+        axes[1].set_xlabel("Epoch")
+        axes[1].set_ylabel("IoU")
+        axes[1].legend()
+        
+        # Test IoU Metrics as bar plots
+        if contains_test_metrics:
+            test_labels = ['City IoU', 'Non-City IoU'] + [f'{class_dict_remapped[i].capitalize()} IoU' for i in range(len(test_class_ious))]
+            test_values = [test_city_iou, test_non_city_iou] + test_class_ious
+            bar_colors = ['gray', 'lightgray'] + [class_colors[i] for i in range(len(test_class_ious))]
+            
+            bars = axes[2].bar(test_labels, test_values, color=bar_colors, zorder=3)
+            axes[2].grid(True, axis='y', zorder=1)
+            axes[2].set_title("Test IoU Metrics")
+            axes[2].set_ylabel("IoU")
+            axes[2].set_xticklabels(test_labels, rotation=45, ha='right')
+            
+            # Add exact percentages above bars
+            for bar, value in zip(bars, test_values):
+                height = bar.get_height()
+                axes[2].text(bar.get_x() + bar.get_width() / 2, height + 0.01, f'{value:.2%}', 
+                            ha='center', va='bottom', fontsize=10, color='black')
+
+        plt.tight_layout()
+        plt.show()
+
+    def sample(self, run_id, data_pairs: list):
+        """
+        Predict and visualize model predictions for a list of data pairs.
+
+        Args:
+            run_id (str): The run ID for loading model weights.
+            data_pairs (list): A list of tuples (image, ground_truth, scene_label).
+                image: Tensor of the input image.
+                ground_truth: Ground truth segmentation mask (optional, can be None if not used).
+                scene_label: Scene label string.
+        """
+        model_path = self._get_model_path(run_id)
+        
+        # Load model weights
+        self.model.load_state_dict(torch.load(f'models/{model_path}', map_location=self.device, weights_only=True))
+        self.model.eval()  # Set the model to evaluation mode
+
+        # Define the same color map for the classes as in the plot function
+        colors = list(mcolors.TABLEAU_COLORS.values())
+        class_colors = {i: colors[i % len(colors)] for i in range(5)}  # Assuming 5 classes
+
+        # Extract images, ground truths, and scene labels from data_pairs
+        images = [pair[0] for pair in data_pairs]
+        ground_truths = [pair[1] for pair in data_pairs]
+        scene_labels = [pair[2] for pair in data_pairs]
+
+        # Make predictions
+        with torch.no_grad():
+            predictions = [self.model(image.unsqueeze(0).to(self.device)) for image in images]
+
+        print(torch.unique(torch.argmax(predictions[0].squeeze(0), dim=0).cpu()))
+        
+        fig, axes = plt.subplots(3, len(images), figsize=(15, 10))  # Updated to 4 rows
+        for idx, (pair, pred) in enumerate(zip(data_pairs, predictions)):
+            image, ground_truth, scene_label = pair
+            
+            remapping_transform = RemapClasses(old_to_new={0: 0,
+                                                           2: 1,
+                                                           8: 2,
+                                                           10: 3,
+                                                           13: 4})
+                                                        
+            ground_truth = remapping_transform(ground_truth)
+            ground_truth[ground_truth == 255] = 4  # Remap void class to sky
+            # Unnormalize the input image for visualization
+            unnormalized_image = unnormalize(image, mean, std)
+            pred_mask = torch.argmax(pred.squeeze(0), dim=0).cpu().numpy()
+
+            # Display the original image with scene label
+            axes[0, idx].imshow(unnormalized_image.permute(1, 2, 0))  # Convert CHW to HWC for plotting
+            axes[0, idx].set_title(f"Image {idx+1}")
+            axes[0, idx].text(5, 5, scene_label, fontsize=10, color='white', 
+                            bbox=dict(facecolor='black', alpha=0.8, pad=2), va='top', ha='left')
+            axes[0, idx].axis("off")
+
+            # Display the predicted mask
+            cmap = mcolors.ListedColormap([class_colors[i] for i in range(5)])  # Use the defined class colors
+            axes[1, idx].imshow(pred_mask, cmap=cmap)
+            axes[1, idx].set_title(f"Prediction {idx+1}")
+            axes[1, idx].axis("off")
+
+            # Display the overlap of ground truth and predictions
+            if ground_truth is not None:
+                ground_truth_mask = ground_truth.cpu().numpy()  # Convert to numpy for compatibility
+                overlap = (ground_truth_mask == pred_mask).astype(float)  # 1 for correct, 0 for incorrect
+                overlap_percentage = 100 * overlap.sum() / ground_truth_mask.size
+                axes[2, idx].imshow(overlap, cmap="Greens", alpha=0.7)  # Green for correct predictions
+                axes[2, idx].set_title(f"Ground Truth Overlap {idx+1}: {overlap_percentage:.2f}%")
+            else:
+                axes[2, idx].set_title("No Ground Truth")
+            axes[2, idx].axis("off")
+
+        # Create a legend for the classes
+        legend_patches = [plt.Line2D([0], [0], color=class_colors[i], lw=4, label=f"{class_dict_remapped[i]}")
+                        for i in range(5)]
+        fig.legend(handles=legend_patches, loc='upper center', ncol=5, bbox_to_anchor=(0.5, 1.02))
+
+        plt.tight_layout()
+        plt.show()
+
+
+    def _get_model_path(self, run_id: str):
+        print(f"\nSearching for model weights for run {run_id}...")
+        models = os.listdir('models')
+        model_path = None
         for model in models:
-            if self.run_id in model:
-                model_state = torch.load(os.path.join(MODELS_PATH, model))
-                
-                self.model.load_state_dict(model_state)
-                
-                return self.model
-
-    def _test_n_samples(self, test_sample_ids: list = None):
-        model = self._load_model()
-        for idx in test_sample_ids:
-            image, label, scene = self.test_dataset[idx]
-            
-            print(f"Image shape: {image.shape}")
-            print(f"Label shape: {label.shape}")
-            print(f"Scene: {scene}")
-            
-            model.eval()
-            with torch.no_grad():
-                image = image.unsqueeze(0).to(self.device)
-                output = model(image)
-                pred = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()
-                
-                cmap = plt.get_cmap('tab20')
-                unique_classes = list(range(19))  # Adjust if there are fewer/more classes
-                legend_patches = [mpatches.Patch(color=cmap(i / len(unique_classes)), label=f'Class {i}') for i in unique_classes]
-
-                print(pred, label)
-
-                plt.figure(figsize=(12, 6))
-
-                # Ground Truth subplot
-                plt.subplot(1, 2, 1)
-                plt.imshow(label, cmap='tab20')
-                plt.title("Ground Truth")
-                plt.axis('off')
-                plt.legend(handles=legend_patches, loc='upper right', bbox_to_anchor=(1.2, 1.0), title="Classes")
-
-                # Prediction subplot
-                plt.subplot(1, 2, 2)
-                plt.imshow(pred, cmap='tab20')
-                plt.title("Prediction")
-                plt.axis('off')
-                plt.legend(handles=legend_patches, loc='upper right', bbox_to_anchor=(1.2, 1.0), title="Classes")
-
-                plt.tight_layout()
-                plt.show()
-
-    def _fetch_data(self):
-        """
-        Fetches the run data from wandb using the API.
-        """
-        # Initialize API
+            run_name = model.split('_')
+            run_id_in_name = run_name[-1].split('.')[0]
+            if run_id_in_name == run_id:
+                model_path = model
+                print(f'Found model: {model_path}!')
+        return model_path
+        
+    def _load_model_weights(self, run_id: str):
+        model_path = self._get_model_path(run_id)
+        
+        self.model.load_state_dict(torch.load(f'models/{model_path}', map_location=self.device, weights_only=True))
+        self.model.to(self.device)
+    
+    def _fetch_data(self, run_id: str):
         api = wandb.Api()
-
-        # Fetch the run
         try:
-            run = api.run(f"{self.entity_name}/{self.project_name}/{self.run_id}")
-            self.history = run.history()
+            run = api.run(f"{self.entity_name}/{self.project_name}/{run_id}")
+            self.run_name = run.name
+            self.elapsed_time = run.summary.get('_runtime', None)
+            self.history = run.scan_history()
         except wandb.errors.CommError as e:
             raise ValueError(f"Error fetching run: {e}")
-
-    def plot(self):
-        """
-        Plots the train and validation loss for the specified wandb run.
-        """
-        if self.history is None:
-            self._fetch_data()
-
-        # Check if 'train_loss' and 'val_loss' exist in the history
-        if 'train_loss' not in self.history or 'val_loss' not in self.history:
-            raise ValueError("The run does not have 'train_loss' and/or 'val_loss' logged.")
-
-        # Plot train and validation loss
-        plt.figure(figsize=(10, 6))
-        plt.plot(self.history['train_loss'], label='Train Loss')
-        plt.plot(self.history['val_loss'], label='Validation Loss', linestyle='--')
-        plt.title(f"Train and Validation Loss for Run {self.run_id}")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss")
-        plt.legend()
-        plt.grid()
-        plt.show()
