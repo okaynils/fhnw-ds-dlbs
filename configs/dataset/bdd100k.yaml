@@ -3,7 +3,9 @@ images_dir: "data/bdd100k/images/10k/train"
 labels_dir: "data/bdd100k/labels/sem_seg/masks/train"
 det_train_path: "data/bdd100k/labels/det_20/det_train.json"
 det_val_path: "data/bdd100k/labels/det_20/det_val.json"
-test_size: 454
+train_ratio: 0.7
+test_ratio: 0.1
+val_ratio: 0.2
 transform:
   _target_: torchvision.transforms.Compose
   transforms:

@@ -21,48 +21,21 @@ def main(cfg: DictConfig):
     os.chdir(hydra.utils.get_original_cwd())
     logger.info(OmegaConf.to_yaml(cfg))
     
-    dataset_splits = custom_split_dataset_with_det(
-        base_data_path=cfg.dataset.images_dir,
-        base_labels_path=cfg.dataset.labels_dir,
-        det_train_path=cfg.dataset.det_train_path,
-        det_val_path=cfg.dataset.det_val_path,
-        test_size=cfg.dataset.test_size,
-        random_state=cfg.seed
-    )
-
-    train_dataset = BDD100KDataset(
-        images_dir=dataset_splits['train']['data_folder'],
-        labels_dir=dataset_splits['train']['labels_folder'],
-        filenames=dataset_splits['train']['image_filenames'],
-        transform=hydra.utils.instantiate(cfg.dataset.transform),
-        target_transform=hydra.utils.instantiate(cfg.dataset.target_transform),
-        scene_info=dataset_splits['train']['scene_map']
-    )
-
-    val_dataset = BDD100KDataset(
-        images_dir=dataset_splits['val']['data_folder'],
-        labels_dir=dataset_splits['val']['labels_folder'],
-        filenames=dataset_splits['val']['image_filenames'],
-        transform=hydra.utils.instantiate(cfg.dataset.transform),
-        target_transform=hydra.utils.instantiate(cfg.dataset.target_transform),
-        scene_info=dataset_splits['val']['scene_map']
-    )
-
-    test_dataset = BDD100KDataset(
-        images_dir=dataset_splits['test']['data_folder'],
-        labels_dir=dataset_splits['test']['labels_folder'],
-        filenames=dataset_splits['test']['image_filenames'],
-        transform=hydra.utils.instantiate(cfg.dataset.transform),
-        target_transform=hydra.utils.instantiate(cfg.dataset.target_transform),
-        scene_info=dataset_splits['test']['scene_map']
-    )
-
+    dataset = BDD100KDataset(base_path='./data/bdd100k',
+                             transform=hydra.utils.instantiate(cfg.dataset.transform),
+                             target_transform=hydra.utils.instantiate(cfg.dataset.target_transform),)
+    
+    train_dataset, val_dataset, test_dataset = split_dataset(dataset,
+                                                             train_ratio=cfg.dataset.train_ratio,
+                                                             val_ratio=cfg.dataset.val_ratio,
+                                                             test_ratio=cfg.dataset.test_ratio,
+                                                             random_seed=cfg.seed)
+    
     train_loader = DataLoader(train_dataset, batch_size=cfg.dataset.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg.dataset.batch_size)
     test_loader = DataLoader(test_dataset, batch_size=cfg.dataset.batch_size)
 
     class_weights_file = cfg.dataset.class_weights_file
-    num_classes = cfg.model.num_classes
     class_weights = None
 
     if os.path.exists(class_weights_file):

@@ -9,61 +9,40 @@ from tqdm import trange
 from torchvision import transforms
 from PIL import Image
 
-def custom_split_dataset_with_det(
-    base_data_path,
-    base_labels_path,
-    det_train_path,
-    det_val_path,
-    val_subfolder='val',
-    train_subfolder='train',
-    test_size=454,
-    random_state=1337
-):
-    with open(det_train_path) as f:
-        det_train_data = json.load(f)
-    with open(det_val_path) as f:
-        det_val_data = json.load(f)
+from torch.utils.data import Subset
 
-    train_scene_map = {det["name"]: det["attributes"]["scene"] for det in det_train_data}
-    val_scene_map = {det["name"]: det["attributes"]["scene"] for det in det_val_data}
+def split_dataset(dataset, train_ratio=0.7, val_ratio=0.2, test_ratio=0.1, random_seed=42):
+    """
+    Splits the dataset into train, validation, and test partitions.
 
-    train_images_dir = os.path.join(base_data_path)
-    train_labels_dir = os.path.join(base_labels_path)
+    :param dataset: The BDD100KDataset dataset object.
+    :param train_ratio: Proportion of the dataset to allocate to the training set.
+    :param val_ratio: Proportion of the dataset to allocate to the validation set.
+    :param test_ratio: Proportion of the dataset to allocate to the test set.
+    :param random_seed: Seed for reproducibility of the split.
+    :return: A tuple of (train_dataset, val_dataset, test_dataset).
+    """
+    assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6, "Ratios must sum to 1."
 
-    train_image_filenames = [f for f in os.listdir(train_images_dir) if f in train_scene_map]
-    val_image_filenames = [f for f in os.listdir(train_images_dir) if f in val_scene_map]
-
-    train_image_filenames, test_image_filenames = train_test_split(
-        train_image_filenames, test_size=test_size, random_state=random_state
-    )
+    np.random.seed(random_seed)
     
-    print()
-    print("--- Split Sizes ---")
-    print(f"- Train Images: {len(train_image_filenames)}")
-    print(f"- Val Images: {len(val_image_filenames)}")
-    print(f"- Test Images: {len(test_image_filenames)}")
-    print()
+    total_size = len(dataset)
+    indices = np.arange(total_size)
     
-    return {
-        'train': {
-            'data_folder': train_images_dir,
-            'labels_folder': train_labels_dir,
-            'image_filenames': train_image_filenames,
-            'scene_map': {k: train_scene_map[k] for k in train_image_filenames},
-        },
-        'val': {
-            'data_folder': train_images_dir,
-            'labels_folder': train_labels_dir,
-            'image_filenames': val_image_filenames,
-            'scene_map': {k: val_scene_map[k] for k in val_image_filenames},
-        },
-        'test': {
-            'data_folder': train_images_dir,
-            'labels_folder': train_labels_dir,
-            'image_filenames': test_image_filenames,
-            'scene_map': {k: train_scene_map[k] for k in test_image_filenames},
-        }
-    }
+    np.random.shuffle(indices)
+    
+    train_split = int(train_ratio * total_size)
+    val_split = train_split + int(val_ratio * total_size)
+    
+    train_indices = indices[:train_split]
+    val_indices = indices[train_split:val_split]
+    test_indices = indices[val_split:]
+    
+    train_dataset = Subset(dataset, train_indices)
+    val_dataset = Subset(dataset, val_indices)
+    test_dataset = Subset(dataset, test_indices)
+    
+    return train_dataset, val_dataset, test_dataset
     
 def check_dataset_overlap(train_filenames, val_filenames, test_filenames):
     train_set = set(train_filenames)
@@ -157,7 +136,6 @@ class RemapClasses:
         self.old_to_new = old_to_new
 
     def __call__(self, mask):
-        # Create a new mask filled with 255 (ignore)
         new_mask = torch.full_like(mask, 255)
         for old_class, new_class in self.old_to_new.items():
             new_mask[mask == old_class] = new_class

@@ -5,27 +5,103 @@ from torchvision import transforms
 from PIL import Image
 import numpy as np
 import torch
-from sklearn.model_selection import train_test_split
+from pathlib import Path
 
 class BDD100KDataset(Dataset):
-    def __init__(self, images_dir, labels_dir=None, filenames=None, transform=None, target_transform=None, scene_info=None):
-        self.images_dir = images_dir
-        self.labels_dir = labels_dir
+    def __init__(
+        self,
+        base_path: str,
+        transform: transforms.Compose = None,
+        target_transform: transforms.Compose = None
+    ):
+        """
+        Initializes the BDD100K Dataset.
+
+        Args:
+            base_path (str): Base directory containing 'images/10k' and 'labels/sem_seg/masks'.
+            transform (transforms.Compose, optional): Transformations to apply to the images.
+            target_transform (transforms.Compose, optional): Transformations to apply to the masks.
+        """
+        self.base_path = Path(base_path)
+        self.images_base_dir = self.base_path / 'images' / '10k'
+        self.labels_base_dir = self.base_path / 'labels' / 'sem_seg' / 'masks'
+        self.det_dir = self.base_path / 'labels' / 'det_20'
         self.transform = transform
         self.target_transform = target_transform
-        self.scene_info = scene_info if scene_info else {}
 
-        self.image_filenames = filenames if filenames else os.listdir(images_dir)
+        self.det_train_path = self.det_dir / 'det_train.json'
+        self.det_val_path = self.det_dir / 'det_val.json'
 
-    def __len__(self):
+        self.scene_info = self._load_scene_info()
+
+        self.image_filenames, self.labels_dirs = self._gather_filenames()
+
+    def _load_scene_info(self) -> dict:
+        """
+        Loads scene information from detection JSON files.
+
+        Returns:
+            dict: A mapping from image filename to scene information.
+        """
+        scene_map = {}
+        
+        if self.det_train_path.exists():
+            with open(self.det_train_path, 'r') as f:
+                det_train_data = json.load(f)
+            train_scene_map = {det["name"]: det["attributes"]["scene"] for det in det_train_data}
+            scene_map.update(train_scene_map)
+        else:
+            print(f"Warning: {self.det_train_path} does not exist.")
+
+        if self.det_val_path.exists():
+            with open(self.det_val_path, 'r') as f:
+                det_val_data = json.load(f)
+            val_scene_map = {det["name"]: det["attributes"]["scene"] for det in det_val_data}
+            scene_map.update(val_scene_map)
+        else:
+            print(f"Warning: {self.det_val_path} does not exist.")
+
+        return scene_map
+
+    def _gather_filenames(self) -> tuple:
+        """
+        Gathers image filenames from 'train' and 'val' directories that have scene information.
+
+        Returns:
+            tuple: A tuple containing:
+                - List of image file paths.
+                - List of corresponding label directories.
+        """
+        image_filenames = []
+        labels_dirs = []
+
+        for split in ['train', 'val']:
+            images_dir = self.images_base_dir / split
+            labels_dir = self.labels_base_dir / split
+
+            if not images_dir.exists():
+                print(f"Warning: Images directory {images_dir} does not exist.")
+                continue
+            if not labels_dir.exists():
+                print(f"Warning: Labels directory {labels_dir} does not exist.")
+                continue
+
+            split_image_filenames = [f for f in os.listdir(images_dir) if f in self.scene_info]
+
+            image_filenames.extend([images_dir / f for f in split_image_filenames])
+            labels_dirs.extend([labels_dir] * len(split_image_filenames))
+
+        return image_filenames, labels_dirs
+
+    def __len__(self) -> int:
         return len(self.image_filenames)
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
-            return [self.__getitem__(i) for i in range(*idx.indices(len(self)))]
-        
+            return [self[i] for i in range(*idx.indices(len(self)))]
+
         try:
-            image_path = os.path.join(self.images_dir, self.image_filenames[idx])
+            image_path = self.image_filenames[idx]
             image = Image.open(image_path).convert('RGB')
 
             if self.transform:
@@ -33,21 +109,20 @@ class BDD100KDataset(Dataset):
             else:
                 image = transforms.ToTensor()(image)
 
-            if self.labels_dir:
-                label_filename = self.image_filenames[idx].replace('.jpg', '.png')
-                label_path = os.path.join(self.labels_dir, label_filename)
-                label = Image.open(label_path)
+            label_path = self.labels_dirs[idx] / image_path.name.replace('.jpg', '.png')
+            if not label_path.exists():
+                raise FileNotFoundError(f"Label file {label_path} does not exist.")
 
-                if self.target_transform:
-                    label = self.target_transform(label)
-                else:
-                    label = torch.tensor(np.array(label), dtype=torch.long)
+            label = Image.open(label_path)
 
-            scene = self.scene_info.get(self.image_filenames[idx], None)
+            if self.target_transform:
+                label = self.target_transform(label)
+            else:
+                label = torch.tensor(np.array(label), dtype=torch.long)
 
-            if self.labels_dir:
-                return image, label, scene
-            return image, scene
+            scene = self.scene_info.get(image_path.name, None)
+
+            return image, label, scene
 
         except Exception as e:
             print(f"Error at index {idx}: {e}")
