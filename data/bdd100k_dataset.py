@@ -99,31 +99,34 @@ class BDD100KDataset(Dataset):
     def __getitem__(self, idx):
         if isinstance(idx, slice):
             return [self[i] for i in range(*idx.indices(len(self)))]
+        elif isinstance(idx, list) or isinstance(idx, np.ndarray):
+            idx = idx.tolist() if isinstance(idx, np.ndarray) else idx
+            return [self[i] for i in idx]
+        else:
+            try:
+                image_path = self.image_filenames[idx]
+                image = Image.open(image_path).convert('RGB')
 
-        try:
-            image_path = self.image_filenames[idx]
-            image = Image.open(image_path).convert('RGB')
+                if self.transform:
+                    image = self.transform(image)
+                else:
+                    image = transforms.ToTensor()(image)
 
-            if self.transform:
-                image = self.transform(image)
-            else:
-                image = transforms.ToTensor()(image)
+                label_path = self.labels_dirs[idx] / image_path.name.replace('.jpg', '.png')
+                if not label_path.exists():
+                    raise FileNotFoundError(f"Label file {label_path} does not exist.")
 
-            label_path = self.labels_dirs[idx] / image_path.name.replace('.jpg', '.png')
-            if not label_path.exists():
-                raise FileNotFoundError(f"Label file {label_path} does not exist.")
+                label = Image.open(label_path)
 
-            label = Image.open(label_path)
+                if self.target_transform:
+                    label = self.target_transform(label)
+                else:
+                    label = torch.tensor(np.array(label), dtype=torch.long)
 
-            if self.target_transform:
-                label = self.target_transform(label)
-            else:
-                label = torch.tensor(np.array(label), dtype=torch.long)
+                scene = self.scene_info.get(image_path.name, None)
 
-            scene = self.scene_info.get(image_path.name, None)
+                return image, label, scene
 
-            return image, label, scene
-
-        except Exception as e:
-            print(f"Error at index {idx}: {e}")
-            raise e
+            except Exception as e:
+                print(f"Error at index {idx}: {e}")
+                raise e
