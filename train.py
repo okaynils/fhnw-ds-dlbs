@@ -25,6 +25,10 @@ def main(cfg: DictConfig):
                              transform=hydra.utils.instantiate(cfg.dataset.transform),
                              target_transform=hydra.utils.instantiate(cfg.dataset.target_transform),)
     
+    if cfg.trainer.overfit_test:
+        logger.info('--- OVERFIT TEST ACTIVE ---')
+        dataset = dataset[:12]
+    
     train_dataset, val_dataset, test_dataset = split_dataset(dataset,
                                                              train_ratio=cfg.dataset.train_ratio,
                                                              val_ratio=cfg.dataset.val_ratio,

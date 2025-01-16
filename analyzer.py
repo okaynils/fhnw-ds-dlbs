@@ -103,6 +103,7 @@ class Analyzer:
             axes[2].grid(True, axis='y', zorder=1)
             axes[2].set_title("Test IoU Metrics")
             axes[2].set_ylabel("IoU")
+            axes[2].set_xticks(range(len(test_labels)))
             axes[2].set_xticklabels(test_labels, rotation=45, ha='right')
             
             for bar, value in zip(bars, test_values):

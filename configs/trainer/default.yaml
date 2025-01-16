@@ -4,3 +4,4 @@ seed: 1337
 device: "cuda"
 verbose: true
 early_stopping_patience: 7
+overfit_test: false

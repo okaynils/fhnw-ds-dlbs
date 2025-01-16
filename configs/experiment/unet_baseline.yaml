@@ -1,12 +1,17 @@
+# @package _global_
+
 _base_: ../config.yaml
 
-experiment_name: "unet_baseline"
+experiment_name: "unet_baseline_test"
+run_name: "unet_baseline_test"
 
 model:
   _target_: core.UNet
   num_classes: 5
   encoder_dims: [64, 128, 256]
-  decoder_dims: [1024, 512, 256]
+  decoder_dims: [256, 128, 64]
 
 trainer:
-  run_name: "unet_baseline"
+  run_name: "unet_baseline_test"
+  overfit_test: true
+  early_stopping_patience: null

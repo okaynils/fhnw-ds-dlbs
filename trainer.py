@@ -155,6 +155,7 @@ class Trainer:
         models = os.listdir("models")
         for model in models:
             if self.run_name in model:
+                logger.info(f"Model {self.run_name} already exists in {model}!")
                 return True
         return False
 
