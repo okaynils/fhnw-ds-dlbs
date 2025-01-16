@@ -11,8 +11,8 @@ import matplotlib.colors as mcolors
 from data.utils import unnormalize, RemapClasses
 from data import class_dict_remapped
 
-mean = torch.tensor([0.3652, 0.3999, 0.4053])
-std = torch.tensor([0.2527, 0.2645, 0.2755])
+mean = [0.3654, 0.4002, 0.4055]
+std = [0.2526, 0.2644, 0.2755]
 
 class Analyzer:
     def __init__(self, model: nn.Module, device: str="cpu", project_name: str="dlbs", entity_name: str="okaynils"):
@@ -44,7 +44,6 @@ class Analyzer:
     def plot(self, run_id: str):
         self._fetch_data(run_id)
 
-        # Convert self.history to a list to make it subscriptable
         history_list = list(self.history)
         
         train_loss = [entry['train_loss'] for entry in history_list if 'train_loss' in entry and entry['train_loss'] is not None]
@@ -53,12 +52,10 @@ class Analyzer:
         
         contains_test_metrics = any('test_city_iou' in entry for entry in history_list)
         
-        # Test IoU metrics (single values)
         test_city_iou = None
         test_non_city_iou = None
         test_class_ious = []
         if contains_test_metrics:
-            # Retrieve the last entry that contains the test metrics
             last_test_entry = next(entry for entry in reversed(history_list) if 'test_city_iou' in entry)
             test_city_iou = last_test_entry['test_city_iou']
             test_non_city_iou = last_test_entry['test_non_city_iou']
@@ -72,17 +69,14 @@ class Analyzer:
             val_class_iou = [entry[f'val_iou_class_{i}'] for entry in history_list if f'val_iou_class_{i}' in entry and entry[f'val_iou_class_{i}'] is not None]
             val_class_ious.append(val_class_iou)
 
-        # Define a color map for the classes
         colors = list(mcolors.TABLEAU_COLORS.values())
         class_colors = {i: colors[i % len(colors)] for i in range(len(val_class_ious))}
 
-        # Plotting
         if contains_test_metrics:
             fig, axes = plt.subplots(1, 3, figsize=(20, 6))
         else: 
             fig, axes = plt.subplots(1, 2, figsize=(12, 6))
         
-        # Loss curves
         axes[0].plot(train_loss, label='Train Loss', zorder=3)
         axes[0].plot(val_loss, label='Validation Loss', zorder=2)
         axes[0].grid(True, zorder=1)
@@ -91,7 +85,6 @@ class Analyzer:
         axes[0].set_ylabel("Loss")
         axes[0].legend()
         
-        # Validation IoU
         axes[1].plot(val_global_iou, label='Validation Global IoU', zorder=3)
         for i, val_class_iou in enumerate(val_class_ious):
             axes[1].plot(val_class_iou, label=f'{class_dict_remapped[i].capitalize()} IoU', linestyle='--', color=class_colors[i], zorder=2)
@@ -101,7 +94,6 @@ class Analyzer:
         axes[1].set_ylabel("IoU")
         axes[1].legend()
         
-        # Test IoU Metrics as bar plots
         if contains_test_metrics:
             test_labels = ['City IoU', 'Non-City IoU'] + [f'{class_dict_remapped[i].capitalize()} IoU' for i in range(len(test_class_ious))]
             test_values = [test_city_iou, test_non_city_iou] + test_class_ious
@@ -113,7 +105,6 @@ class Analyzer:
             axes[2].set_ylabel("IoU")
             axes[2].set_xticklabels(test_labels, rotation=45, ha='right')
             
-            # Add exact percentages above bars
             for bar, value in zip(bars, test_values):
                 height = bar.get_height()
                 axes[2].text(bar.get_x() + bar.get_width() / 2, height + 0.01, f'{value:.2%}', 
@@ -135,26 +126,22 @@ class Analyzer:
         """
         model_path = self._get_model_path(run_id)
         
-        # Load model weights
         self.model.load_state_dict(torch.load(f'models/{model_path}', map_location=self.device, weights_only=True))
-        self.model.eval()  # Set the model to evaluation mode
+        self.model.eval()
 
-        # Define the same color map for the classes as in the plot function
         colors = list(mcolors.TABLEAU_COLORS.values())
-        class_colors = {i: colors[i % len(colors)] for i in range(5)}  # Assuming 5 classes
+        class_colors = {i: colors[i % len(colors)] for i in range(5)}
 
-        # Extract images, ground truths, and scene labels from data_pairs
         images = [pair[0] for pair in data_pairs]
         ground_truths = [pair[1] for pair in data_pairs]
         scene_labels = [pair[2] for pair in data_pairs]
 
-        # Make predictions
         with torch.no_grad():
             predictions = [self.model(image.unsqueeze(0).to(self.device)) for image in images]
 
         print(torch.unique(torch.argmax(predictions[0].squeeze(0), dim=0).cpu()))
         
-        fig, axes = plt.subplots(3, len(images), figsize=(15, 10))  # Updated to 4 rows
+        fig, axes = plt.subplots(3, len(images), figsize=(15, 10))
         for idx, (pair, pred) in enumerate(zip(data_pairs, predictions)):
             image, ground_truth, scene_label = pair
             
@@ -165,43 +152,38 @@ class Analyzer:
                                                            13: 4})
                                                         
             ground_truth = remapping_transform(ground_truth)
-            ground_truth[ground_truth == 255] = 4  # Remap void class to sky
-            # Unnormalize the input image for visualization
+            ground_truth[ground_truth == 255] = 4
+            
             unnormalized_image = unnormalize(image, mean, std)
             pred_mask = torch.argmax(pred.squeeze(0), dim=0).cpu().numpy()
 
-            # Display the original image with scene label
-            axes[0, idx].imshow(unnormalized_image.permute(1, 2, 0))  # Convert CHW to HWC for plotting
+            axes[0, idx].imshow(unnormalized_image.permute(1, 2, 0))
             axes[0, idx].set_title(f"Image {idx+1}")
             axes[0, idx].text(5, 5, scene_label, fontsize=10, color='white', 
                             bbox=dict(facecolor='black', alpha=0.8, pad=2), va='top', ha='left')
             axes[0, idx].axis("off")
 
-            # Display the predicted mask
-            cmap = mcolors.ListedColormap([class_colors[i] for i in range(5)])  # Use the defined class colors
+            cmap = mcolors.ListedColormap([class_colors[i] for i in range(5)])
             axes[1, idx].imshow(pred_mask, cmap=cmap)
             axes[1, idx].set_title(f"Prediction {idx+1}")
             axes[1, idx].axis("off")
 
-            # Display the overlap of ground truth and predictions
             if ground_truth is not None:
-                ground_truth_mask = ground_truth.cpu().numpy()  # Convert to numpy for compatibility
-                overlap = (ground_truth_mask == pred_mask).astype(float)  # 1 for correct, 0 for incorrect
+                ground_truth_mask = ground_truth.cpu().numpy()
+                overlap = (ground_truth_mask == pred_mask).astype(float)
                 overlap_percentage = 100 * overlap.sum() / ground_truth_mask.size
-                axes[2, idx].imshow(overlap, cmap="Greens", alpha=0.7)  # Green for correct predictions
-                axes[2, idx].set_title(f"Ground Truth Overlap {idx+1}: {overlap_percentage:.2f}%")
+                axes[2, idx].imshow(overlap, cmap="Greens", alpha=0.7)
+                axes[2, idx].set_title(f"Ground Truth Overlap {idx+1}: {overlap_percentage:.2f}%", fontsize=10)
             else:
                 axes[2, idx].set_title("No Ground Truth")
             axes[2, idx].axis("off")
 
-        # Create a legend for the classes
         legend_patches = [plt.Line2D([0], [0], color=class_colors[i], lw=4, label=f"{class_dict_remapped[i]}")
                         for i in range(5)]
         fig.legend(handles=legend_patches, loc='upper center', ncol=5, bbox_to_anchor=(0.5, 1.02))
 
         plt.tight_layout()
         plt.show()
-
 
     def _get_model_path(self, run_id: str):
         print(f"\nSearching for model weights for run {run_id}...")
