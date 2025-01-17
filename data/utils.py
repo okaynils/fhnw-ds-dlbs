@@ -74,7 +74,7 @@ def check_dataset_overlap(train_filenames, val_filenames, test_filenames):
     print()
 
 def map_class_names_and_order(class_distribution, class_dict):
-    ordered_classes = sorted(class_dict.keys())  # Ensure consistent class order
+    ordered_classes = sorted(class_dict.keys())
     class_names = [class_dict[class_id] for class_id in ordered_classes if class_id in class_distribution]
     proportions = [class_distribution[class_id] for class_id in ordered_classes if class_id in class_distribution]
     return class_names, proportions
@@ -84,8 +84,8 @@ def analyze_class_distribution(dataset, num_classes, dataset_name):
     
     for idx in trange(len(dataset), desc=f"Analyzing {dataset_name}"):
         try:
-            _, mask, _ = dataset[idx]  # Access dataset item
-            mask_array = np.array(mask)  # Convert mask to numpy array
+            _, mask, _ = dataset[idx]
+            mask_array = np.array(mask)
             unique, counts = np.unique(mask_array, return_counts=True)
             class_counts.update(dict(zip(unique, counts)))
         except Exception as e:

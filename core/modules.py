@@ -47,8 +47,8 @@ class DecoderBlock(nn.Module):
 
     def forward(self, x, skip):
         x = self.upconv(x)
-        x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)  # Ensure correct shape
-        x = torch.cat((x, skip), dim=1)  # Concatenate skip connection
+        x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)
+        x = torch.cat((x, skip), dim=1)
         return self.conv(x)
     
 
