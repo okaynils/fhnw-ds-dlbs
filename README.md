@@ -1,6 +1,13 @@
-# Semantic Segmentation on the BDD100K dataset in the Deep Learning for Image and Signals (dlbs) class at FHNW
-
+<h1 align="center">BDD100K: Semantic Segmentation</h1>
+<div align="center">In the Deep Learning for Image and Signals (dlbs) course at <a href="http://fhnw.ch/en">FHNW</a><div>
+<br/>
+<div align="center">
 This repository contains a project that trains **Vanilla U-Net** and **Attention U-Net** models on the **BDD100K** dataset for a **semantic segmentation** task. The project explores multiple experimental setups, hyperparameter tunings, and training schedules using **Hydra** configurations.
+</div>
+
+<p align="center">
+  <img src="./report/figures/repository_banner.jpg" />
+</p>
 
 ---
 
