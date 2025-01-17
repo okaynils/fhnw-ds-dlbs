@@ -1,1 +1,14 @@
 \chapter{Reflection}
+
+Reflecting on the work, I found that the dataset presented significant challenges, making the modeling process particularly demanding. Reducing the number of classes provided a meaningful performance boost, yet the presence of numerous "falsely" labeled objects remained a major hurdle, especially for simpler models trying to capture the finer nuances. Despite these challenges, the Attention U-Net exceeded my expectations. Considering the limited data available, I was impressed by how well it performed—especially since attention mechanisms are typically data-hungry. The addition of dropout regularization played a crucial role in further enhancing the Attention U-Net's ability to generalize.
+
+Although the bare metrics suggested that the Attention models performed slightly worse, a closer examination of selected samples convinced me otherwise. The Attention mechanism truly helped the model focus on critical parts of the image, excelling in complex scenes where clarity and confidence in object labeling were vital.
+
+Looking ahead, I see room for further improvements:
+
+\begin{itemize}
+    \item Augmenting the dataset to increase the number of training samples
+    \item Refining the dataset's ground truths by addressing falsely labeled objects, perhaps by leveraging third-party annotations
+\end{itemize}
+
+These steps could help overcome some of the key challenges encountered and further enhance the performance and reliability of the models.
