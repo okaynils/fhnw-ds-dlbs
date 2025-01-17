@@ -99,6 +99,11 @@ It includes:
 
 4. Make sure you have your BDD100K dataset organized in ./data/bdd100k/ following the paths used in the configs (images and masks). The dataset can be downloaded at https://doc.bdd100k.com/download.html
 
+5. If you wish to use the trained models from my project you can execute the `download_models.sh` script in `./scripts/`:
+    ```bash
+    ./scripts/download.sh
+    ```
+
 ---
 
 ## Usage
