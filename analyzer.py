@@ -187,8 +187,6 @@ class Analyzer:
                 self.model(image.unsqueeze(0).to(self.device)) for image in images
             ]
 
-        print(torch.unique(torch.argmax(predictions[0].squeeze(0), dim=0).cpu()))
-        
         fig, axes = plt.subplots(3, len(images), figsize=(15, 10))
         for idx, (pair, pred) in enumerate(zip(data_pairs, predictions)):
             image, ground_truth, scene_label = pair
@@ -218,7 +216,7 @@ class Analyzer:
             axes[0, idx].axis("off")
 
             cmap = mcolors.ListedColormap([class_colors[i] for i in range(5)])
-            axes[1, idx].imshow(pred_mask, cmap=cmap)
+            axes[1, idx].imshow(pred_mask, cmap=cmap, interpolation='none')
             axes[1, idx].set_title(f"Prediction {idx+1}")
             axes[1, idx].axis("off")
 
@@ -226,7 +224,7 @@ class Analyzer:
                 ground_truth_mask = ground_truth.cpu().numpy()
                 overlap = (ground_truth_mask == pred_mask).astype(float)
                 overlap_percentage = 100 * overlap.sum() / ground_truth_mask.size
-                axes[2, idx].imshow(overlap, cmap="Greens", alpha=0.7)
+                axes[2, idx].imshow(overlap, cmap="Greens", alpha=0.7,  interpolation='none')
                 axes[2, idx].set_title(
                     f"Ground Truth Overlap {idx+1}: {overlap_percentage:.2f}%",
                     fontsize=10

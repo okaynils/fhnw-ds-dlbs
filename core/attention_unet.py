@@ -109,41 +109,37 @@ class AttentionUNet(nn.Module):
     def __init__(self, num_classes, input_channels=3, base_filters=64, dropout_prob=0.0):
         super(AttentionUNet, self).__init__()
 
-        # Encoder
         self.enc1 = EncoderBlock(input_channels, base_filters, dropout_prob=dropout_prob)
         self.enc2 = EncoderBlock(base_filters, base_filters * 2, dropout_prob=dropout_prob)
         self.enc3 = EncoderBlock(base_filters * 2, base_filters * 4, dropout_prob=dropout_prob)
         self.enc4 = EncoderBlock(base_filters * 4, base_filters * 8, dropout_prob=dropout_prob)
 
-        # Bottleneck
         self.bottleneck = DoubleConv(base_filters * 8, base_filters * 16, dropout_prob=dropout_prob)
 
-        # Decoder
-        self.dec1 = DecoderBlock(in_channels=base_filters * 16,
+        self.dec1 = AttnDecoderBlock(in_channels=base_filters * 16,
                                  out_channels=base_filters * 8,
                                  skip_channels=base_filters * 8,
                                  gate_channels=base_filters * 16,
                                  dropout_prob=dropout_prob)
 
-        self.dec2 = DecoderBlock(in_channels=base_filters * 8,
+        self.dec2 = AttnDecoderBlock(in_channels=base_filters * 8,
                                  out_channels=base_filters * 4,
                                  skip_channels=base_filters * 4,
                                  gate_channels=base_filters * 8,
                                  dropout_prob=dropout_prob)
 
-        self.dec3 = DecoderBlock(in_channels=base_filters * 4,
+        self.dec3 = AttnDecoderBlock(in_channels=base_filters * 4,
                                  out_channels=base_filters * 2,
                                  skip_channels=base_filters * 2,
                                  gate_channels=base_filters * 4,
                                  dropout_prob=dropout_prob)
 
-        self.dec4 = DecoderBlock(in_channels=base_filters * 2,
+        self.dec4 = AttnDecoderBlock(in_channels=base_filters * 2,
                                  out_channels=base_filters,
                                  skip_channels=base_filters,
                                  gate_channels=base_filters * 2,
                                  dropout_prob=dropout_prob)
 
-        # Final output layer
         self.final_layer = nn.Conv2d(base_filters, num_classes, kernel_size=1)
 
     def forward(self, x):

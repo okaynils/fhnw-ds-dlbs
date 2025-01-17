@@ -78,7 +78,6 @@ class Trainer:
             return outputs, labels
         elif isinstance(self.criterion, FocalLoss):
             outputs = torch.nn.functional.softmax(outputs, dim=1)
-            # Reshape outputs and labels for FocalLoss
             outputs = outputs.permute(0, 2, 3, 1).reshape(-1, outputs.shape[1])
             labels = labels.view(-1)
             return outputs, labels

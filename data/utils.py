@@ -73,10 +73,6 @@ def check_dataset_overlap(train_filenames, val_filenames, test_filenames):
         print("✔️ No overlap detected between validation and test sets.")
     print()
 
-class ConvertToLongTensor:
-    def __call__(self, x):
-        return torch.tensor(np.array(x), dtype=torch.long)
-
 def map_class_names_and_order(class_distribution, class_dict):
     ordered_classes = sorted(class_dict.keys())  # Ensure consistent class order
     class_names = [class_dict[class_id] for class_id in ordered_classes if class_id in class_distribution]
@@ -140,6 +136,10 @@ class RemapClasses:
         for old_class, new_class in self.old_to_new.items():
             new_mask[mask == old_class] = new_class
         return new_mask
+    
+class ConvertToLongTensor:
+    def __call__(self, x):
+        return torch.tensor(np.array(x), dtype=torch.long)
     
 def unnormalize(img, mean, std):
     if not isinstance(mean, torch.Tensor):

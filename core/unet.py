@@ -18,20 +18,17 @@ class UNet(nn.Module):
 
         self.num_layers = len(encoder_dims)
         
-        # Encoder
         self.enc_layers = nn.ModuleList()
         self.pool_layers = nn.ModuleList()
         
-        in_channels = 3  # Input channels for the first layer
+        in_channels = 3
         for out_channels in encoder_dims:
             self.enc_layers.append(self.double_conv(in_channels, out_channels))
             self.pool_layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
             in_channels = out_channels
         
-        # Bottleneck
         self.bottleneck = self.double_conv(encoder_dims[-1], encoder_dims[-1] * 2)
         
-        # Decoder
         self.upconv_layers = nn.ModuleList()
         self.dec_layers = nn.ModuleList()
         
@@ -41,7 +38,6 @@ class UNet(nn.Module):
             self.dec_layers.append(self.double_conv(out_channels + encoder_dims[-(i + 1)], out_channels))
             in_channels = out_channels
         
-        # Final output layer
         self.final_layer = nn.Conv2d(decoder_dims[-1], num_classes, kernel_size=1)
     
     def double_conv(self, in_channels, out_channels):
@@ -58,16 +54,13 @@ class UNet(nn.Module):
     def forward(self, x):
         enc_outputs = []
         
-        # Encoder path
         for enc_layer, pool_layer in zip(self.enc_layers, self.pool_layers):
             x = enc_layer(x)
-            enc_outputs.append(x)  # Store for skip connections
+            enc_outputs.append(x)
             x = pool_layer(x)
         
-        # Bottleneck
         x = self.bottleneck(x)
         
-        # Decoder path with skip connections
         for i, (upconv, dec_layer) in enumerate(zip(self.upconv_layers, self.dec_layers)):
             x = upconv(x)
             skip_connection = enc_outputs[-(i + 1)]
@@ -75,6 +68,5 @@ class UNet(nn.Module):
             x = torch.cat((x, skip_connection), dim=1)
             x = dec_layer(x)
         
-        # Final output layer
         output = self.final_layer(x)
         return output

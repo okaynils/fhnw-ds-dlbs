@@ -4,7 +4,6 @@ from torch.nn.functional import one_hot
 from torch import Tensor
 from typing import Union
 
-
 class FocalLoss(nn.Module):
     """Computes the focal loss between input and target
     as described here https://arxiv.org/abs/1708.02002v2
@@ -36,6 +35,7 @@ class FocalLoss(nn.Module):
         assert weights is None or isinstance(weights, Tensor), \
             'weights should be of type Tensor or None, but {} given'.format(
                 type(weights))
+            
         self.reduction = reduction
         self.gamma = gamma
         self.ignore_index = ignore_index
@@ -45,6 +45,7 @@ class FocalLoss(nn.Module):
     def _get_weights(self, target: Tensor) -> Tensor:
         if self.weights is None:
             return torch.ones(target.shape[0])
+        
         weights = target * self.weights
         return weights.sum(dim=-1)
 
@@ -52,10 +53,9 @@ class FocalLoss(nn.Module):
             self, target: Tensor, num_classes: int, mask: Tensor
             ) -> Tensor:
         
-        #convert all ignore_index elements to zero to avoid error in one_hot
-        #note - the choice of value 0 is arbitrary, but it should not matter as these elements will be ignored in the loss calculation
         target = target * (target!=self.ignore_index) 
         target = target.view(-1)
+        
         return one_hot(target, num_classes=num_classes)
 
     def _process_preds(self, x: Tensor) -> Tensor:
@@ -63,6 +63,7 @@ class FocalLoss(nn.Module):
             x = torch.vstack([1 - x, x])
             x = x.permute(1, 0)
             return x
+        
         return x.view(-1, x.shape[-1])
 
     def _calc_pt(
@@ -71,6 +72,7 @@ class FocalLoss(nn.Module):
         p = target * x
         p = p.sum(dim=-1)
         p = p * ~mask
+        
         return p
 
     def forward(self, x: Tensor, target: Tensor) -> Tensor:
@@ -81,15 +83,22 @@ class FocalLoss(nn.Module):
         )
         mask = target == self.ignore_index
         mask = mask.view(-1)
+        
         x = self._process_preds(x)
+        
         num_classes = x.shape[-1]
+        
         target = self._process_target(target, num_classes, mask)
+        
         weights = self._get_weights(target).to(x.device)
+        
         pt = self._calc_pt(target, x, mask)
         focal = 1 - pt
         nll = -torch.log(self.eps + pt)
         nll = nll.masked_fill(mask, 0)
+        
         loss = weights * (focal ** self.gamma) * nll
+        
         return self._reduce(loss, mask, weights)
 
     def _reduce(self, x: Tensor, mask: Tensor, weights: Tensor) -> Tensor:
