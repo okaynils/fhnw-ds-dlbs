@@ -1,5 +1,5 @@
 <h1 align="center">BDD100K: Semantic Segmentation</h1>
-<div align="center"><i><small>This project was concluded in the Deep Learning for Image and Signals (dlbs) course at <a href="http://fhnw.ch/en">FHNW</a><small></i><div>
+<div align="center"><i><small>This project was concluded in the Deep Learning for Image and Signals (dlbs) course at <a href="http://fhnw.ch/en">FHNW</a></small></i></div>
 
 <br/>
 
@@ -23,7 +23,6 @@ This repository contains a project that trains <b>Vanilla U-Net</b> and <b>Atten
 5. [Installation](#installation)
 6. [Usage](#usage)
 7. [Project Structure](#project-structure)
-8. [License](#license)
 
 ---
 
