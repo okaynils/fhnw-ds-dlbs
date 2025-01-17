@@ -116,25 +116,25 @@ class AttentionUNet(nn.Module):
 
         self.bottleneck = DoubleConv(base_filters * 8, base_filters * 16, dropout_prob=dropout_prob)
 
-        self.dec1 = AttnDecoderBlock(in_channels=base_filters * 16,
+        self.dec1 = DecoderBlock(in_channels=base_filters * 16,
                                  out_channels=base_filters * 8,
                                  skip_channels=base_filters * 8,
                                  gate_channels=base_filters * 16,
                                  dropout_prob=dropout_prob)
 
-        self.dec2 = AttnDecoderBlock(in_channels=base_filters * 8,
+        self.dec2 = DecoderBlock(in_channels=base_filters * 8,
                                  out_channels=base_filters * 4,
                                  skip_channels=base_filters * 4,
                                  gate_channels=base_filters * 8,
                                  dropout_prob=dropout_prob)
 
-        self.dec3 = AttnDecoderBlock(in_channels=base_filters * 4,
+        self.dec3 = DecoderBlock(in_channels=base_filters * 4,
                                  out_channels=base_filters * 2,
                                  skip_channels=base_filters * 2,
                                  gate_channels=base_filters * 4,
                                  dropout_prob=dropout_prob)
 
-        self.dec4 = AttnDecoderBlock(in_channels=base_filters * 2,
+        self.dec4 = DecoderBlock(in_channels=base_filters * 2,
                                  out_channels=base_filters,
                                  skip_channels=base_filters,
                                  gate_channels=base_filters * 2,

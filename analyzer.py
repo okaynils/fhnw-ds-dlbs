@@ -455,30 +455,82 @@ class Analyzer:
         plt.tight_layout()
         plt.show()
         
-    def plot_attention_maps(self, image_tensor):
+    def plot_attention_maps(self, data_samples, figsize=(20, 4)):
         """
-        Plot the attention maps for each AttentionBlock in an AttentionUNet.
-        
+        Plot the attention maps for each sample in data_samples.
+        Each row will display:
+        1) the original image (unnormalized), 
+        2) up to four attention maps from the AttentionUNet.
+
         Args:
-            image_tensor (torch.Tensor): A single image or small batch. 
-                                         Shape: [C, H, W] or [B, C, H, W].
+            data_samples (list): A list of tuples (image_tensor, label_tensor, scene_label)
+                                from your BDD100KDataset or a slice of it. 
+                                e.g. data_samples = dataset[0:5].
         """
         if not isinstance(self.model, AttentionUNet):
             print("The model is not an AttentionUNet. Aborting attention visualization.")
             return
 
-        self._attention_maps = []
-        self._register_attention_hooks()
+        num_samples = len(data_samples)
+        
+        fig, axes = plt.subplots(num_samples, 5, figsize=(figsize[0], figsize[1] * num_samples))
+
+        if num_samples == 1:
+            axes = np.expand_dims(axes, axis=0)
 
         self.model.eval()
-        with torch.no_grad():
+
+        for row_idx, (image_tensor, _, scene_label) in enumerate(data_samples):
+            self._attention_maps = []
+            self._register_attention_hooks()
+
             if image_tensor.dim() == 3:
                 image_tensor = image_tensor.unsqueeze(0)
-            image_tensor = image_tensor.to(self.device)
-            _ = self.model(image_tensor)
 
-        self._plot_collected_attention_maps(image_tensor)
-        self._detach_attention_hooks()
+            image_tensor = image_tensor.to(self.device)
+
+            with torch.no_grad():
+                _ = self.model(image_tensor)
+
+            unnormalized = unnormalize(
+                image_tensor[0].cpu(),
+                mean,
+                std
+            ).permute(1, 2, 0).numpy()
+
+            axes[row_idx, 0].imshow(unnormalized)
+            axes[row_idx, 0].set_title("Input Image")
+            axes[row_idx, 0].axis("off")
+            
+            if scene_label is not None:
+                axes[row_idx, 0].text(
+                    5, 5, scene_label, fontsize=10, color='white',
+                    bbox=dict(facecolor='black', alpha=0.7, pad=2),
+                    va='top', ha='left'
+                )
+
+           
+            for col_idx, psi in enumerate(self._attention_maps[:4]):
+                psi_upsampled = nn.functional.interpolate(
+                    psi[0].unsqueeze(0),
+                    size=(image_tensor.shape[2], image_tensor.shape[3]),
+                    mode='bilinear', 
+                    align_corners=False
+                ).squeeze().cpu().numpy()
+
+                im_plot = axes[row_idx, col_idx + 1].imshow(psi_upsampled, cmap='jet')
+                axes[row_idx, col_idx + 1].set_title(f"Attention Map {col_idx + 1}")
+                axes[row_idx, col_idx + 1].axis("off")
+
+            self._detach_attention_hooks()
+
+        cbar_ax = fig.add_axes([0.25, 0.08, 0.5, 0.02])
+        fig.colorbar(im_plot, cax=cbar_ax, orientation='horizontal').set_label("Attention Coefficients")
+
+        fig.suptitle("Attention Maps from Selected Samples", fontsize=16)
+        fig.subplots_adjust(top=0.90, bottom=0.15, wspace=0.3)
+        plt.show()
+
 
     def _register_attention_hooks(self):
         """
