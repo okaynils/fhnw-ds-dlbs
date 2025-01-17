@@ -163,20 +163,42 @@ class Analyzer:
         plt.tight_layout()
         plt.show()
 
-    def sample(self, run_id, data_pairs: list):
+    def sample(self, run_id: str, data_pairs: list):
+        """
+        Visualize samples by displaying the input image, predicted mask, and overlap with ground truth.
+        
+        Each row corresponds to a single sample with three columns:
+            1. Input Image
+            2. Predicted Mask
+            3. Overlap with Ground Truth (including global IoU metric)
+        
+        Args:
+            run_id (str): The W&B run ID to load model weights from.
+            data_pairs (list): A list of tuples, each containing:
+                            (image_tensor, ground_truth_tensor, scene_label)
+        """
         if self.model is None:
             print("No model was provided, cannot sample predictions.")
             return
 
         model_path = self._get_model_path(run_id)
-        
-        self.model.load_state_dict(
-            torch.load(f'models/{model_path}', map_location=self.device, weights_only=True)
-        )
-        self.model.eval()
+        if not model_path:
+            print(f"No local model file found for run_id {run_id}.")
+            return
+
+        try:
+            self.model.load_state_dict(
+                torch.load(f'models/{model_path}', map_location=self.device, weights_only=True)
+            )
+            self.model.to(self.device)
+            self.model.eval()
+        except Exception as e:
+            print(f"Error loading model weights: {e}")
+            return
 
         colors = list(mcolors.TABLEAU_COLORS.values())
         class_colors = {i: colors[i % len(colors)] for i in range(5)}
+        cmap_pred = mcolors.ListedColormap([class_colors[i] for i in range(5)])
 
         images = [pair[0] for pair in data_pairs]
         ground_truths = [pair[1] for pair in data_pairs]
@@ -187,61 +209,66 @@ class Analyzer:
                 self.model(image.unsqueeze(0).to(self.device)) for image in images
             ]
 
-        fig, axes = plt.subplots(3, len(images), figsize=(15, 10))
-        for idx, (pair, pred) in enumerate(zip(data_pairs, predictions)):
-            image, ground_truth, scene_label = pair
-            
-            remapping_transform = RemapClasses(old_to_new={0: 0,
-                                                           2: 1,
-                                                           8: 2,
-                                                           10: 3,
-                                                           13: 4})
-            ground_truth = remapping_transform(ground_truth)
-            ground_truth[ground_truth == 255] = 4
-            
-            unnormalized_image = unnormalize(image, mean, std)
-            pred_mask = torch.argmax(pred.squeeze(0), dim=0).cpu().numpy()
-
-            axes[0, idx].imshow(unnormalized_image.permute(1, 2, 0))
-            axes[0, idx].set_title(f"Image {idx+1}")
-            axes[0, idx].text(
-                5, 5,
-                scene_label,
-                fontsize=10,
-                color='white',
-                bbox=dict(facecolor='black', alpha=0.8, pad=2),
-                va='top',
-                ha='left'
-            )
-            axes[0, idx].axis("off")
-
-            cmap = mcolors.ListedColormap([class_colors[i] for i in range(5)])
-            axes[1, idx].imshow(pred_mask, cmap=cmap, interpolation='none')
-            axes[1, idx].set_title(f"Prediction {idx+1}")
-            axes[1, idx].axis("off")
-
-            if ground_truth is not None:
-                ground_truth_mask = ground_truth.cpu().numpy()
-                overlap = (ground_truth_mask == pred_mask).astype(float)
-                overlap_percentage = 100 * overlap.sum() / ground_truth_mask.size
-                axes[2, idx].imshow(overlap, cmap="Greens", alpha=0.7,  interpolation='none')
-                axes[2, idx].set_title(
-                    f"Ground Truth Overlap {idx+1}: {overlap_percentage:.2f}%",
-                    fontsize=10
-                )
-            else:
-                axes[2, idx].set_title("No Ground Truth")
-            axes[2, idx].axis("off")
+        num_samples = len(data_pairs)
+        fig, axes = plt.subplots(num_samples, 3, figsize=(9, 4 * num_samples))
+        
+        if num_samples == 1:
+            axes = np.expand_dims(axes, axis=0)
 
         legend_patches = [
-            plt.Line2D([0], [0], color=class_colors[i], lw=4, label=f"{class_dict_remapped[i]}")
+            mcolors.to_rgba(mcolors.to_rgb(class_colors[i]), alpha=1.0)
             for i in range(5)
         ]
-        fig.legend(
-            handles=legend_patches, loc='upper center', ncol=5, bbox_to_anchor=(0.5, 1.02)
-        )
+        legend_labels = [f"{class_dict_remapped[i].capitalize()}" for i in range(5)]
+        handles = [plt.Line2D([0], [0], marker='s', color='w', label=label,
+                            markersize=10, markerfacecolor=legend_patches[i])
+                for i, label in enumerate(legend_labels)]
+        
+        fig.suptitle("Sample Predictions", fontsize=20, y=.92)
+        
+        fig.legend(handles=handles, title="Classes", loc='upper center', ncol=5, bbox_to_anchor=(0.5, 0.9))
 
-        plt.tight_layout()
+        for idx, (pair, pred) in enumerate(zip(data_pairs, predictions)):
+            image, ground_truth, scene_label = pair
+
+            unnormalized_image = unnormalize(image, mean, std).permute(1, 2, 0).cpu().numpy()
+            
+            pred_mask = torch.argmax(pred.squeeze(0), dim=0).cpu().numpy()
+
+            iou_dict = {}
+            for cls in range(5):
+                intersection = np.logical_and(pred_mask == cls, ground_truth.cpu().numpy() == cls).sum()
+                union = np.logical_or(pred_mask == cls, ground_truth.cpu().numpy() == cls).sum()
+                iou = intersection / union if union != 0 else 0.0
+                iou_dict[cls] = iou
+            global_iou = np.mean(list(iou_dict.values())) * 100
+
+            overlap_mask = np.zeros((*ground_truth.shape, 4))
+            for cls in range(5):
+                mask = (pred_mask == cls) & (ground_truth.cpu().numpy() == cls)
+                overlap_mask[mask] = mcolors.to_rgba(class_colors[cls], alpha=0.5)
+
+            ax_input = axes[idx, 0]
+            ax_input.imshow(unnormalized_image)
+            ax_input.set_title("Input Image", fontsize=10)
+            ax_input.axis("off")
+            ax_input.set_ylabel(f"Sample {idx+1}", fontsize=12, rotation=0, labelpad=50, va='center')
+            ax_input.text(5, 5, scene_label, fontsize=10, color='white',
+                        bbox=dict(facecolor='black', alpha=0.7, pad=2),
+                        va='top', ha='left')
+
+            ax_pred = axes[idx, 1]
+            im_pred = ax_pred.imshow(pred_mask, cmap=cmap_pred, vmin=0, vmax=4)
+            ax_pred.set_title("Predicted Mask", fontsize=10)
+            ax_pred.axis("off")
+
+            ax_overlap = axes[idx, 2]
+            ax_overlap.imshow(unnormalized_image)
+            ax_overlap.imshow(overlap_mask)
+            ax_overlap.set_title(f"Overlap with Ground Truth\nGlobal IoU: {global_iou:.2f}%", fontsize=8)
+            ax_overlap.axis("off")
+            
+        plt.tight_layout(rect=[0, 0.03, 1, 0.90])
         plt.show()
 
     def plot_grid_results(self, tuning_grid):
