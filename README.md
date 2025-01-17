@@ -1,13 +1,17 @@
 <h1 align="center">BDD100K: Semantic Segmentation</h1>
-<div align="center">In the Deep Learning for Image and Signals (dlbs) course at <a href="http://fhnw.ch/en">FHNW</a><div>
+<div align="center"><i><small>This project was concluded in the Deep Learning for Image and Signals (dlbs) course at <a href="http://fhnw.ch/en">FHNW</a><small></i><div>
+
 <br/>
+
 <div align="center">
-This repository contains a project that trains **Vanilla U-Net** and **Attention U-Net** models on the **BDD100K** dataset for a **semantic segmentation** task. The project explores multiple experimental setups, hyperparameter tunings, and training schedules using **Hydra** configurations.
+This repository contains a project that trains <b>Vanilla U-Net</b> and <b>Attention U-Net</b> models on the <b>BDD100K</b> dataset for a <b>semantic segmentation</b> task. The project explores multiple experimental setups, hyperparameter tunings, and training schedules using <b>Hydra</b> configurations.
 </div>
 
-<p align="center">
+<br/>
+
+<div align="center">
   <img src="./report/figures/repository_banner.jpg" />
-</p>
+</div>
 
 ---
 
@@ -33,7 +37,7 @@ This repository contains a project that trains **Vanilla U-Net** and **Attention
 - **Highlights**:
   - Extensive experimentation with different hyperparameters (learning rate, weight decay, dropout).
   - Logging and model management using **Weights & Biases** (wandb).
-  - Semantic segmentation classes remapped from 19 original classes down to 5 major classes.
+  - Semantic segmentation classes remapped from `19` original classes down to 5 major classes.
 
 ---
 
