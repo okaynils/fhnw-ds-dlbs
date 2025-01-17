@@ -4,10 +4,76 @@ import torch.nn.functional as F
 
 class DoubleConv(nn.Module):
     """
+    Double convolution: (Conv2D -> BatchNorm -> ReLU) * 2
+    """
+    def __init__(self, in_channels, out_channels):
+        super(DoubleConv, self).__init__()
+        self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x):
+        return self.double_conv(x)
+
+
+class EncoderBlock(nn.Module):
+    """
+    Encoder block: DoubleConv -> MaxPool2D
+    """
+    def __init__(self, in_channels, out_channels):
+        super(EncoderBlock, self).__init__()
+        self.conv = DoubleConv(in_channels, out_channels)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+    def forward(self, x):
+        skip = self.conv(x)
+        downsampled = self.pool(skip)
+        return skip, downsampled
+
+
+class DecoderBlock(nn.Module):
+    """
+    Decoder block: TransposeConv2D -> Concatenate -> DoubleConv
+    """
+    def __init__(self, in_channels, out_channels):
+        super(DecoderBlock, self).__init__()
+        self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
+        self.conv = DoubleConv(out_channels * 2, out_channels)
+
+    def forward(self, x, skip):
+        x = self.upconv(x)
+        x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)  # Ensure correct shape
+        x = torch.cat((x, skip), dim=1)  # Concatenate skip connection
+        return self.conv(x)
+    
+
+class EncoderBlockDropout(nn.Module):
+    """
+    Encoder block: DoubleConv -> MaxPool2D
+    """
+    def __init__(self, in_channels, out_channels, dropout_prob=0.0):
+        super(EncoderBlockDropout, self).__init__()
+        self.conv = DoubleConvDropout(in_channels, out_channels, dropout_prob=dropout_prob)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+    def forward(self, x):
+        skip = self.conv(x)
+        downsampled = self.pool(skip)
+        return skip, downsampled
+
+    
+
+class DoubleConvDropout(nn.Module):
+    """
     Double convolution: (Conv2D -> BatchNorm -> ReLU -> Dropout?) * 2
     """
     def __init__(self, in_channels, out_channels, dropout_prob=0.0):
-        super(DoubleConv, self).__init__()
+        super(DoubleConvDropout, self).__init__()
         self.dropout_prob = dropout_prob
 
         self.double_conv = nn.Sequential(
@@ -24,39 +90,8 @@ class DoubleConv(nn.Module):
 
     def forward(self, x):
         return self.double_conv(x)
-
-
-class EncoderBlock(nn.Module):
-    """
-    Encoder block: DoubleConv -> MaxPool2D
-    """
-    def __init__(self, in_channels, out_channels, dropout_prob=0.0):
-        super(EncoderBlock, self).__init__()
-        self.conv = DoubleConv(in_channels, out_channels, dropout_prob=dropout_prob)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-
-    def forward(self, x):
-        skip = self.conv(x)
-        downsampled = self.pool(skip)
-        return skip, downsampled
     
     
-class DecoderBlock(nn.Module):
-    """
-    Decoder block: TransposeConv2D -> Concatenate -> DoubleConv
-    """
-    def __init__(self, in_channels, out_channels):
-        super(DecoderBlock, self).__init__()
-        self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
-        self.conv = DoubleConv(out_channels * 2, out_channels)
-
-    def forward(self, x, skip):
-        x = self.upconv(x)
-        x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)  # Ensure correct shape
-        x = torch.cat((x, skip), dim=1)  # Concatenate skip connection
-        return self.conv(x)    
-    
-
 class AttentionBlock(nn.Module):
     """
     Attention block: Given gating signal (g) and skip connection (x),
@@ -80,43 +115,33 @@ class AttentionBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x, g):
-        # x: skip connection (from encoder), shape [B, F_l, H, W]
-        # g: gating signal (from decoder), shape [B, F_g, H', W']
-
-        # Project gating and skip to F_int
         g1 = self.W_g(g)
         x1 = self.W_x(x)
 
-        # If gating and skip shapes differ, interpolate gating
         if g1.shape[2:] != x1.shape[2:]:
             g1 = F.interpolate(g1, size=x1.shape[2:], mode="bilinear", align_corners=False)
 
-        # Attention coefficients
         psi = self.relu(g1 + x1)
         psi = self.psi(psi)
 
-        # Multiply skip connection by attention map
-        return x * psi    
+        return x * psi
 
-    
-class AttnDecoderBlock(nn.Module):
+
+class AttentionDecoderBlock(nn.Module):
     """
     Decoder block: (UpConv -> Attention -> Concat) -> DoubleConv
     """
     def __init__(self, in_channels, out_channels, skip_channels, gate_channels, dropout_prob=0.0):
-        super(DecoderBlock, self).__init__()
+        super(AttentionDecoderBlock, self).__init__()
         self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
         self.attention = AttentionBlock(F_g=gate_channels, F_l=skip_channels, F_int=skip_channels // 2)
-        self.conv = DoubleConv(out_channels * 2, out_channels, dropout_prob=dropout_prob)
+        self.conv = DoubleConvDropout(out_channels * 2, out_channels, dropout_prob=dropout_prob)
 
     def forward(self, x, skip, g):
         x = self.upconv(x)
         x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)
 
-        # Apply attention gating on skip connection
         skip = self.attention(skip, g)
 
-        # Concatenate attended skip and upsampled feature
         x = torch.cat((x, skip), dim=1)
         return self.conv(x)
-    

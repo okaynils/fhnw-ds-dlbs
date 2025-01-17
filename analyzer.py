@@ -1,4 +1,3 @@
-import copy
 import os
 from omegaconf import OmegaConf
 
@@ -12,7 +11,7 @@ import numpy as np
 from data.utils import unnormalize, RemapClasses
 from data import class_dict_remapped
 from core import AttentionUNet
-from core.attention_unet import AttentionBlock
+from core.modules import AttentionBlock
 
 mean = [0.3654, 0.4002, 0.4055]
 std = [0.2526, 0.2644, 0.2755]

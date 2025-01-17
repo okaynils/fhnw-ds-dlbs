@@ -2,56 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
-class DoubleConv(nn.Module):
-    """
-    Double convolution: (Conv2D -> BatchNorm -> ReLU) * 2
-    """
-    def __init__(self, in_channels, out_channels):
-        super(DoubleConv, self).__init__()
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-        )
-
-    def forward(self, x):
-        return self.double_conv(x)
-
-
-class EncoderBlock(nn.Module):
-    """
-    Encoder block: DoubleConv -> MaxPool2D
-    """
-    def __init__(self, in_channels, out_channels):
-        super(EncoderBlock, self).__init__()
-        self.conv = DoubleConv(in_channels, out_channels)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-
-    def forward(self, x):
-        skip = self.conv(x)
-        downsampled = self.pool(skip)
-        return skip, downsampled
-
-
-class DecoderBlock(nn.Module):
-    """
-    Decoder block: TransposeConv2D -> Concatenate -> DoubleConv
-    """
-    def __init__(self, in_channels, out_channels):
-        super(DecoderBlock, self).__init__()
-        self.upconv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
-        self.conv = DoubleConv(out_channels * 2, out_channels)
-
-    def forward(self, x, skip):
-        x = self.upconv(x)
-        x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)  # Ensure correct shape
-        x = torch.cat((x, skip), dim=1)  # Concatenate skip connection
-        return self.conv(x)
-    
+from core.modules import EncoderBlock, DoubleConv, DecoderBlock
 
 class VanillaUNet(nn.Module):
     def __init__(self, num_classes, input_channels=3, base_filters=64):
