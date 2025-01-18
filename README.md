@@ -89,7 +89,7 @@ It includes:
 
 2. **Create and activate** a Python virtual environment (optional but recommended):
     ```bash
-    pytjon3 -m venv .venv
+    python3 -m venv .venv
     ```
 
 3. Install dependencies:
